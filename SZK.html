@@ -1869,16 +1869,10 @@ const years = [...new Set(
   allM.map(m=>{
     if(!m.date) return null;
 
-    if(m.date.includes('-')){
-      return parseInt(m.date.split('-')[0]);
-    }
+    const d = new Date(m.date);
+    if(isNaN(d)) return null;
 
-    if(m.date.includes('/')){
-      const parts = m.date.split('/');
-      return parseInt(parts[2]); // YYYY
-    }
-
-    return null;
+    return d.getFullYear();
   }).filter(Boolean)
 )].sort((a,b)=>b-a);
 
@@ -1918,27 +1912,18 @@ function getYear(d){
 const filtered = allM.filter(m=>{
   if(!m.date) return false;
 
-  // ✅ 年取得（両フォーマット対応）
-  let y = null;
+  const d = new Date(m.date);
+  if(isNaN(d)) return false;
 
-  if(m.date.includes('-')){
-    y = parseInt(m.date.split('-')[0]);
-  }else if(m.date.includes('/')){
-    const parts = m.date.split('/');
-    y = parseInt(parts[2]);
-  }
+  const y = d.getFullYear();
 
-  // 年フィルター
   if(y !== S.statsYear) return false;
 
-  // 種別フィルター
   if(S.statsType==='official') return m.matchType==='official';
   if(S.statsType==='practice') return m.matchType==='practice';
 
   return true;
-})
-.sort((a,b)=>{
-  // ✅ 日付で正しく並び替え
+}).sort((a,b)=>{
   return new Date(b.date) - new Date(a.date);
 });
 
