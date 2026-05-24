@@ -1120,12 +1120,31 @@ function getMB(){
 Object.defineProperty(window,'MB',{get:getMB});
 const SK=()=>'szk5_'+(S.league||'x');
 function save(){
-  try{localStorage.setItem(SK(),JSON.stringify({
-    present:S.present,mlg:S.mlg,
-    customMembers:S.customMembers||[],
-    deletedNums:S.deletedNums||[],
-    matches:S.matches,nid:S.nid,cid:S.cid
-  }));}catch(e){}
+  // 1) まず従来通り localStorage（自分の端末用）
+  try{
+    localStorage.setItem(SK(), JSON.stringify({
+      present:S.present, mlg:S.mlg,
+      customMembers:S.customMembers || [],
+      deletedNums:S.deletedNums || [],
+      matches:S.matches, nid:S.nid, cid:S.cid
+    }));
+  }catch(e){}
+
+  // 2) Firestoreにも保存（全員共有）
+  try{
+    if(window.__remoteSave){
+      const payload = {
+        payload: {
+          present:S.present, mlg:S.mlg,
+          customMembers:S.customMembers || [],
+          deletedNums:S.deletedNums || [],
+          matches:S.matches, nid:S.nid, cid:S.cid
+        },
+        updatedAt: Date.now()
+      };
+      window.__remoteSave(SK(), payload).catch(err => console.warn("remote save failed", err));
+    }
+  }catch(e){}
 }
 function load(){
   try{
@@ -1264,7 +1283,16 @@ function toggleSB(){
 // SCREENS
 // ══════════════════════════════════════════════════════
 function showS(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));if(id)document.getElementById(id).classList.add('on');}
-function logout(){S.league=null;S.role=null;document.getElementById('app').classList.remove('on');showS('s-lg');}
+function logout(){
+  try{
+    if(window.__remoteUnsubscribe && S.league){
+      window.__remoteUnsubscribe(SK());
+    }
+  }catch(e){}
+  S.league=null; S.role=null;
+  document.getElementById('app').classList.remove('on');
+  showS('s-lg');
+}
 document.getElementById('szk-btn').onclick=chkPW;
 document.getElementById('szk-pw').onkeydown=e=>{if(e.key==='Enter')chkPW();};
 function chkPW(){
@@ -1277,7 +1305,50 @@ function selLg(lg){
   if(lg==='集計'){selRole('view');return;}
   document.getElementById('rl-sub').textContent=lg;showS('s-rl');
 }
-function selRole(r){S.role=r;showS(null);load();boot();}
+function selRole(r){
+  S.role = r;
+  showS(null);
+
+  // まずローカル（即表示）
+  load();
+  boot();
+
+  // リアルタイム購読開始（リーグ単位）
+  try{
+    if(window.__remoteSubscribe){
+      window.__remoteSubscribe(SK(), (data) => {
+        // エラー通知（権限/未作成など）
+        if(data && data.__error){
+          console.warn("remote subscribe error:", data.__error);
+          return;
+        }
+        // Firestoreにデータが無いときは何もしない
+        if(!data || !data.payload) return;
+
+        const d = data.payload;
+        // 重要：ここでは save() を呼ばない（ループ防止）
+        S.present = d.present || {};
+        S.mlg = d.mlg || {};
+        S.customMembers = d.customMembers || [];
+        S.deletedNums = d.deletedNums || [];
+        S.matches = d.matches || {};
+        S.nid = d.nid || 1;
+        S.cid = d.cid || null;
+
+        // 表示更新
+        if(S.topTab === 'stats'){
+          renderStats();
+        }else{
+          renderTabs();
+          renderSB();
+          renderMC();
+        }
+      });
+    }
+  }catch(e){
+    console.warn("subscribe setup failed", e);
+  }
+}
 
 // ══════════════════════════════════════════════════════
 // BOOT
@@ -2297,7 +2368,7 @@ window.addEventListener('orientationchange', ()=>{ setTimeout(fixHeights,200); }
 </script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyApXPP6AU-QSyvTxW1KUmI9yo3bj1MQXco",
@@ -2309,29 +2380,51 @@ window.addEventListener('orientationchange', ()=>{ setTimeout(fixHeights,200); }
     measurementId: "G-6GRVZTFBBK"
   };
 
-  // ✅ Firebase初期化
   const app = initializeApp(firebaseConfig);
-  // ✅ Firestore初期化
-  const db = getFirestore(app);
+  const db  = getFirestore(app);
 
-  // ✅ 既存の巨大<script>（非module）から参照できるように window に渡す
+  // 既存(非module)スクリプトから使えるように window に公開
   window.__FIREBASE__ = { db };
 
-  console.log("Firebase connected:", firebaseConfig.projectId);
+  // 購読解除関数をリーグキーごとに保持
+  const _unsubs = new Map();
 
-  // ─────────────────────────────────────────────
-  // 共有保存（Firestore）: 既存の save/load を差し替えるための関数を window に用意
-  // ─────────────────────────────────────────────
+  // リアルタイム購読開始：docを監視して変更のたびに callback を呼ぶ
+  // onSnapshot は初回に現在データを返し、その後変更のたびに通知される [1](https://firebase.google.com/docs/firestore/query-data/listen)
+  window.__remoteSubscribe = function(leagueKey, callback){
+    const key = encodeURIComponent(leagueKey);
+    // 既存購読があれば解除
+    if(_unsubs.has(key)){
+      try{ _unsubs.get(key)(); }catch(e){}
+      _unsubs.delete(key);
+    }
+    const ref = doc(db, "szk", key);
+    const unsub = onSnapshot(ref, (snap) => {
+      callback(snap.exists() ? snap.data() : null);
+    }, (err) => {
+      console.warn("onSnapshot error", err);
+      callback({ __error: String(err?.code || err?.message || err) });
+    });
+    _unsubs.set(key, unsub);
+    return unsub;
+  };
+
+  // 購読解除
+  window.__remoteUnsubscribe = function(leagueKey){
+    const key = encodeURIComponent(leagueKey);
+    if(_unsubs.has(key)){
+      try{ _unsubs.get(key)(); }catch(e){}
+      _unsubs.delete(key);
+    }
+  };
+
+  // Firestoreへ保存（merge=trueで上書き衝突を少し減らす）
   window.__remoteSave = async function(leagueKey, payload){
-    // docId に使えない文字が来ても安全なように encode
-    const docId = encodeURIComponent(leagueKey);
-    await setDoc(doc(db, "szk", docId), payload, { merge: true });
+    const key = encodeURIComponent(leagueKey);
+    await setDoc(doc(db, "szk", key), payload, { merge: true });
   };
 
-  window.__remoteLoad = async function(leagueKey){
-    const docId = encodeURIComponent(leagueKey);
-    const snap = await getDoc(doc(db, "szk", docId));
-    return snap.exists() ? snap.data() : null;
-  };
-</script></body>
+  console.log("Firebase realtime ready:", firebaseConfig.projectId);
+</script>
+</body>
 </html>
