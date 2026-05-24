@@ -1267,13 +1267,22 @@ function sbMems(){
 }
 
 // 全試合（現在+過去）を取得
+// 全リーグのFirebaseデータをキャッシュ
+const _remoteCache = {};
+
 function allMatches(){
+  // S.matches（現在のリーグ）
   const current = Object.values(S.matches || {});
+  // 他リーグのキャッシュ
+  const otherLeagues = Object.values(_remoteCache)
+    .flatMap(m => Object.values(m || {}));
+  // HIST_ALL（静的な過去データ）
   const hist = Array.isArray(HIST_ALL) ? HIST_ALL : [];
-  // 重複除去（S.matchesにある試合はHIST_ALLより優先）
-  const ids = new Set(current.map(m=>m.id));
+  // 全てマージして重複除去（新しいデータ優先）
+  const allDynamic = [...current, ...otherLeagues];
+  const ids = new Set(allDynamic.map(m=>m.id));
   const histFiltered = hist.filter(m=>!ids.has(m.id));
-  return [...histFiltered, ...current];
+  return [...histFiltered, ...allDynamic];
 }
 
 // ── 出場ポイント計算（全試合対象）──
@@ -1392,68 +1401,48 @@ function selLg(lg){
 function selRole(r){
   S.role = r;
   showS(null);
-
-  // まずローカル（即表示）
   load();
   boot();
 
-  // Firebaseの購読開始（moduleの初期化を待つ）
+  const leagueKeys = ['szk5_都リーグ', 'szk5_世田谷リーグ'];
+
   function startSubscribe(){
     if(!window.__remoteSubscribe){
-      // まだmoduleが初期化されていない → 完了コールバックを登録
       window.__firebaseReadyQueue = startSubscribe;
       return;
     }
     try{
-      window.__remoteSubscribe(SK(), (data) => {
-        if(data && data.__error){
-          console.warn("remote subscribe error:", data.__error);
-          return;
-        }
-        if(!data || !data.payload) return;
-
-        const d = data.payload;
-        S.present = d.present || {};
-        S.mlg = d.mlg || {};
-        S.customMembers = d.customMembers || [];
-        S.deletedNums = d.deletedNums || [];
-
-        // リモートのmatches をマージ（ローカルを上書きしない）
-        const remoteMatches = d.matches || {};
-        S.matches = { ...S.matches, ...remoteMatches };
-        S.nid = d.nid || 1;
-
-        // cidは現在表示中のものを優先
-        if(!S.cid) S.cid = d.cid || null;
-
-        // 表示更新
-        if(S.topTab === 'stats'){
-          renderStats();
-        } else {
-          renderTabs();
-          renderSB();
-          renderMC();
-        }
-        setTimeout(fixHeights, 80);
+      leagueKeys.forEach(lk => {
+        window.__remoteSubscribe(lk, (data) => {
+          if(data && data.__error){ console.warn("remote error:", lk, data.__error); return; }
+          if(!data || !data.payload) return;
+          const d = data.payload;
+          const rm = d.matches || {};
+          _remoteCache[lk] = rm;
+          if(lk === SK()){
+            S.present = d.present || {};
+            S.mlg = d.mlg || {};
+            S.customMembers = d.customMembers || [];
+            S.deletedNums = d.deletedNums || [];
+            S.matches = { ...S.matches, ...rm };
+            S.nid = d.nid || 1;
+            if(!S.cid) S.cid = d.cid || null;
+          }
+          if(S.topTab === 'stats'){ renderStats(); }
+          else { renderTabs(); renderSB(); renderMC(); }
+          setTimeout(fixHeights, 80);
+        });
       });
-    }catch(e){
-      console.warn("subscribe setup failed", e);
-    }
+    }catch(e){ console.warn("subscribe failed", e); }
   }
 
-  // module既に初期化済みならすぐ開始、そうでなければ待機
-  if(window.__firebaseReady){
-    startSubscribe();
-  } else {
+  if(window.__firebaseReady){ startSubscribe(); }
+  else {
     window.__firebaseReadyQueue = startSubscribe;
-    // フォールバック：2秒後に再試行
     setTimeout(()=>{ if(!window.__firebaseReady) startSubscribe(); }, 2000);
   }
 }
 
-// ══════════════════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════════════════
 function boot(){
   const isM=S.role==='manager';
   document.getElementById('app').classList.add('on');
