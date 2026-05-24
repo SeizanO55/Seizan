@@ -1898,17 +1898,48 @@ const years = [...new Set(
     <option value="official" ${S.statsType==='official'?'selected':''}>公式戦</option>
     <option value="practice" ${S.statsType==='practice'?'selected':''}>練習試合</option>
   `;
+// 安全な年取得
 function getYear(d){
   if(!d) return null;
-  if(d.includes('-')) return parseInt(d.split('-')[0]);
-  if(d.includes('/')) return parseInt(d.split('/')[2]);
+
+  if(d.includes('-')){
+    return parseInt(d.split('-')[0]);
+  }
+
+  if(d.includes('/')){
+    const parts = d.split('/');
+    return parseInt(parts[2]);
+  }
+
   return null;
 }
 
   // 対象試合（年 + 種別）
 const filtered = allM.filter(m=>{
   if(!m.date) return false;
-  const y = parseInt(m.date.split('-')[0]);
+
+  const y = getYear(m.date);   // ✅←これに変更
+
+  if(y !== S.statsYear) return false;
+
+  if(S.statsType==='official') return m.matchType==='official';
+  if(S.statsType==='practice') return m.matchType==='practice';
+
+  return true;
+}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  if(S.statsType==='official') return m.matchType==='official';
+  if(S.statsType==='practice') return m.matchType==='practice';
+
+  return true;
+}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(y !== S.statsYear) return false;
+
+  if(S.statsType==='official') return m.matchType==='official';
+  if(S.statsType==='practice') return m.matchType==='practice';
+
+  return true;
+}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     if(y !== S.statsYear) return false;
     if(S.statsType==='official') return m.matchType==='official';
     if(S.statsType==='practice') return m.matchType==='practice';
