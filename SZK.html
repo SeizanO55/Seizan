@@ -2295,5 +2295,43 @@ window.addEventListener('load',()=>{
 window.addEventListener('resize', fixHeights);
 window.addEventListener('orientationchange', ()=>{ setTimeout(fixHeights,200); });
 </script>
-</body>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyApXPP6AU-QSyvTxW1KUmI9yo3bj1MQXco",
+    authDomain: "szk50-74e42.firebaseapp.com",
+    projectId: "szk50-74e42",
+    storageBucket: "szk50-74e42.firebasestorage.app",
+    messagingSenderId: "203645673755",
+    appId: "1:203645673755:web:f5f7278b8910f65ad833be",
+    measurementId: "G-6GRVZTFBBK"
+  };
+
+  // ✅ Firebase初期化
+  const app = initializeApp(firebaseConfig);
+  // ✅ Firestore初期化
+  const db = getFirestore(app);
+
+  // ✅ 既存の巨大<script>（非module）から参照できるように window に渡す
+  window.__FIREBASE__ = { db };
+
+  console.log("Firebase connected:", firebaseConfig.projectId);
+
+  // ─────────────────────────────────────────────
+  // 共有保存（Firestore）: 既存の save/load を差し替えるための関数を window に用意
+  // ─────────────────────────────────────────────
+  window.__remoteSave = async function(leagueKey, payload){
+    // docId に使えない文字が来ても安全なように encode
+    const docId = encodeURIComponent(leagueKey);
+    await setDoc(doc(db, "szk", docId), payload, { merge: true });
+  };
+
+  window.__remoteLoad = async function(leagueKey){
+    const docId = encodeURIComponent(leagueKey);
+    const snap = await getDoc(doc(db, "szk", docId));
+    return snap.exists() ? snap.data() : null;
+  };
+</script></body>
 </html>
