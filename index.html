@@ -240,8 +240,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--acc)}
 }
 #mc{display:none;flex-direction:column;gap:8px;width:100%}
 #mc.on{display:flex}
-#mc{display:none;flex-direction:column;gap:8px;width:100%}
-#mc.on{display:flex}
 #stats-view{display:none;flex-direction:column;gap:10px;padding:4px;width:100%}
 #stats-view.on{display:flex}
 
@@ -1473,7 +1471,7 @@ function setTopTab(tab){
   document.getElementById('tn-stats').classList.toggle('on',tab==='stats');
   document.getElementById('match-tabs').style.display=tab==='match'?'':'none';
   const mc=document.getElementById('mc');
-  if(mc) mc.classList.toggle('on',false);
+  if(mc){ mc.classList.toggle('on',false); mc.style.display='none'; }
   document.getElementById('no-m').style.display=tab==='match'?'':'none';
   const sv=document.getElementById('stats-view');
   if(sv){
@@ -1560,9 +1558,14 @@ function autoFill(){
 function renderMC(){
   const mc=document.getElementById('mc');
   if(!S.cid||!S.matches[S.cid]){
-    document.getElementById('no-m').style.display='';mc.classList.remove('on');return;
+    document.getElementById('no-m').style.display='';
+    mc.classList.remove('on');
+    mc.style.display='none';
+    return;
   }
-  document.getElementById('no-m').style.display='none';mc.classList.add('on');
+  document.getElementById('no-m').style.display='none';
+  mc.classList.add('on');
+  mc.style.display='flex';
   const m=S.matches[S.cid];
   renderInfo(m);renderHalves(m);renderSP(m);renderGoals(m);renderComments(m);renderPts();renderScore(m);
 }
@@ -1850,128 +1853,116 @@ function setSc(qi,tm,v){
 function renderStats(){
   const sv = document.getElementById('stats-view');
   if(!sv) return;
-
   sv.style.display = 'flex';
   sv.style.flexDirection = 'column';
   sv.style.gap = '8px';
+  sv.style.padding = '4px';
 
   const allM = allMatches();
   const years = [...new Set(allM.map(m=>{
     if(!m.date) return null;
     const y = parseInt(m.date.split('-')[0]);
-    return isNaN(y) ? null : y;
+    return isNaN(y)?null:y;
   }).filter(Boolean))].sort((a,b)=>b-a);
 
   if(!years.length){
-    sv.innerHTML = '<div style="padding:20px;color:#5a7890;text-align:center">データがありません<br><small>HIST_ALL: '+allM.length+'件</small></div>';
+    sv.innerHTML = '<div style="padding:20px;color:#5a7890;text-align:center">データがありません ('+allM.length+'件読込済)</div>';
     return;
   }
-
   if(!years.includes(S.statsYear)) S.statsYear = years[0];
   if(!S.statsLeagueFilter) S.statsLeagueFilter = '合算';
 
-  // フィルタ
   const filtered = allM.filter(m=>{
     if(!m.date) return false;
-    const y = parseInt(m.date.split('-')[0]);
-    if(y !== S.statsYear) return false;
+    if(parseInt(m.date.split('-')[0]) !== S.statsYear) return false;
     const lg = S.statsLeagueFilter;
-    if(lg === '都リーグ')     return m.league === '都リーグ';
-    if(lg === '世田谷リーグ')  return m.league === '世田谷リーグ';
-    if(lg === '練習試合')     return m.matchType === 'practice' || m.league === '練習試合';
+    if(lg==='都リーグ')    return m.league==='都リーグ';
+    if(lg==='世田谷リーグ') return m.league==='世田谷リーグ';
+    if(lg==='練習試合')    return m.matchType==='practice'||m.league==='練習試合';
     return true;
-  }).sort((a,b)=> a.date > b.date ? 1 : -1);
+  }).sort((a,b)=>a.date>b.date?1:-1);
 
-  // サマリー
   let wins=0,draws=0,losses=0,gf=0,ga=0;
-  const pStats = {};
-  const oppStats = {};
-  getMB().forEach(m=>{ pStats[m.num]={pts:0,gkPts:0,goals:0,assists:0,played:0}; });
+  const pStats={}, oppStats={};
+  getMB().forEach(m=>{pStats[m.num]={pts:0,gkPts:0,goals:0,assists:0,played:0};});
 
   filtered.forEach(m=>{
-    const f = (m.score && m.score.own || [0,0,0,0]).reduce((a,b)=>a+b,0);
-    const a = (m.score && m.score.opp || [0,0,0,0]).reduce((a,b)=>a+b,0);
+    const f=(m.score&&m.score.own||[0,0,0,0]).reduce((a,b)=>a+b,0);
+    const a=(m.score&&m.score.opp||[0,0,0,0]).reduce((a,b)=>a+b,0);
     gf+=f; ga+=a;
-    if(f>a) wins++; else if(f<a) losses++; else draws++;
+    if(f>a)wins++; else if(f<a)losses++; else draws++;
     (m.goals||[]).forEach(g=>{
-      if(g.scorer){ if(!pStats[g.scorer]) pStats[g.scorer]={pts:0,gkPts:0,goals:0,assists:0,played:0}; pStats[g.scorer].goals++; }
-      if(g.assist){ if(!pStats[g.assist]) pStats[g.assist]={pts:0,gkPts:0,goals:0,assists:0,played:0}; pStats[g.assist].assists++; }
+      if(g.scorer){if(!pStats[g.scorer])pStats[g.scorer]={pts:0,gkPts:0,goals:0,assists:0,played:0};pStats[g.scorer].goals++;}
+      if(g.assist){if(!pStats[g.assist])pStats[g.assist]={pts:0,gkPts:0,goals:0,assists:0,played:0};pStats[g.assist].assists++;}
     });
-    const opp = m.opponent || '不明';
-    if(!oppStats[opp]) oppStats[opp]={w:0,d:0,l:0,gf:0,ga:0};
-    oppStats[opp].gf+=f; oppStats[opp].ga+=a;
-    if(f>a) oppStats[opp].w++; else if(f<a) oppStats[opp].l++; else oppStats[opp].d++;
+    const opp=m.opponent||'不明';
+    if(!oppStats[opp])oppStats[opp]={w:0,d:0,l:0,gf:0,ga:0};
+    oppStats[opp].gf+=f;oppStats[opp].ga+=a;
+    if(f>a)oppStats[opp].w++;else if(f<a)oppStats[opp].l++;else oppStats[opp].d++;
   });
 
-  const mc = filtered.length;
-  const wr = mc ? ((wins/mc)*100).toFixed(1) : '–';
+  const mc2=filtered.length;
+  const wr=mc2?((wins/mc2)*100).toFixed(1):'0';
 
-  // HTML構築
-  function btn(key, label, color, tc){
-    const active = S.statsLeagueFilter === key;
-    return '<button onclick="S.statsLeagueFilter=\''+key+'\';renderStats()" style="padding:6px 14px;font-size:12px;font-weight:700;border-radius:7px;cursor:pointer;margin:2px;border:1px solid '+(active?tc:'#1a3050')+';background:'+(active?color:'rgba(255,255,255,.06)')+';color:'+(active?tc:'#5a7890')+'">'+label+'</button>';
+  function makeBtn(key,label,bg,tc){
+    const act=S.statsLeagueFilter===key;
+    return '<button onclick="S.statsLeagueFilter=\''+key+'\';renderStats()" style="padding:6px 14px;font-size:12px;font-weight:700;border-radius:7px;cursor:pointer;margin:2px;border:1px solid '+(act?tc:'#1a3050')+';background:'+(act?bg:'rgba(255,255,255,.06)')+';color:'+(act?tc:'#5a7890')+'">'+label+'</button>';
   }
+  const lgBtns = makeBtn('合算','📊 合算','var(--acc)','#000')
+               + makeBtn('都リーグ','🏟️ 都リーグ','rgba(74,168,232,.35)','#7ac0f0')
+               + makeBtn('世田谷リーグ','⚽ 世田谷','rgba(155,89,182,.35)','#c090e0')
+               + makeBtn('練習試合','🔵 練習','rgba(255,255,255,.1)','#aaa');
 
-  const lgBtns = btn('合算','📊 合算','var(--acc)','#000')
-               + btn('都リーグ','🏟️ 都リーグ','rgba(74,168,232,.35)','#7ac0f0')
-               + btn('世田谷リーグ','⚽ 世田谷','rgba(155,89,182,.35)','#c090e0')
-               + btn('練習試合','🔵 練習','rgba(255,255,255,.1)','#aaa');
+  const yearSel = '<select onchange="S.statsYear=parseInt(this.value);renderStats()" style="background:#0d1f32;color:#ddeaf8;border:1px solid #1a3050;border-radius:6px;padding:4px 8px;font-size:12px">'
+    + years.map(y=>'<option value="'+y+'"'+(y===S.statsYear?' selected':'')+'>'+y+'年</option>').join('')
+    + '</select>';
 
-  const yearBtns = years.map(y=>'<option value="'+y+'"'+(y===S.statsYear?' selected':'')+'>'+y+'年</option>').join('');
+  function makeRow(cols){ return '<tr>'+cols.map(([v,st])=>'<td style="padding:5px 8px;'+(st||'')+'">'+v+'</td>').join('')+'</tr>'; }
+  const TH = 'background:rgba(0,0,0,.3);color:#5a7890;padding:5px 8px;font-size:10px;font-weight:700;text-align:center;white-space:nowrap';
+  const THL = TH+';text-align:left';
+  function tbl(heads,rows){ return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+heads.map(h=>'<th style="'+h[1]+'">'+h[0]+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'; }
+  const SEC = 'background:#0d1f32;border:1px solid #1a3050;border-radius:12px;padding:10px 12px';
+  const SECT = 'font-size:13px;font-weight:700;color:#f0c040;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #1a3050';
 
   // 得点ランキング
-  const goalRankData = getMB().map(m=>({m,s:pStats[m.num]||{goals:0,assists:0}}))
-    .filter(({s})=>s.goals>0).sort((a,b)=>b.s.goals-a.s.goals).slice(0,10);
-  let goalRows = '';
-  goalRankData.forEach(({m,s},i)=>{
-    const col = i===0?'#f0c040':i===1?'#ccc':i===2?'#cd7f32':'#5a7890';
-    goalRows += '<tr><td style="text-align:center;font-weight:900;color:'+col+'">'+(i+1)+'</td><td style="font-weight:700;padding:4px 8px">'+m.nick+'</td><td style="text-align:center;color:#30d080;font-weight:900">⚽ '+s.goals+'</td></tr>';
+  const gRank = getMB().map(m=>({m,s:pStats[m.num]||{goals:0}})).filter(({s})=>s.goals>0).sort((a,b)=>b.s.goals-a.s.goals).slice(0,10);
+  let gRows='';
+  gRank.forEach(({m,s},i)=>{
+    const medal=i===0?'#f0c040':i===1?'#ccc':i===2?'#cd7f32':'#5a7890';
+    gRows+=makeRow([[i+1,'text-align:center;font-weight:900;color:'+medal],[m.nick,'font-weight:700'],['⚽ '+s.goals,'text-align:center;color:#30d080;font-weight:900']]);
   });
-  if(!goalRows) goalRows = '<tr><td colspan="3" style="text-align:center;color:#5a7890;padding:8px">データなし</td></tr>';
+  if(!gRows) gRows='<tr><td colspan="3" style="text-align:center;color:#5a7890;padding:8px">データなし</td></tr>';
 
   // アシストランキング
-  const asstRankData = getMB().map(m=>({m,s:pStats[m.num]||{goals:0,assists:0}}))
-    .filter(({s})=>s.assists>0).sort((a,b)=>b.s.assists-a.s.assists).slice(0,10);
-  let asstRows = '';
-  asstRankData.forEach(({m,s},i)=>{
-    const col = i===0?'#f0c040':i===1?'#ccc':i===2?'#cd7f32':'#5a7890';
-    asstRows += '<tr><td style="text-align:center;font-weight:900;color:'+col+'">'+(i+1)+'</td><td style="font-weight:700;padding:4px 8px">'+m.nick+'</td><td style="text-align:center;color:#4aa8e8;font-weight:900">🎯 '+s.assists+'</td></tr>';
+  const aRank = getMB().map(m=>({m,s:pStats[m.num]||{assists:0}})).filter(({s})=>s.assists>0).sort((a,b)=>b.s.assists-a.s.assists).slice(0,10);
+  let aRows='';
+  aRank.forEach(({m,s},i)=>{
+    const medal=i===0?'#f0c040':i===1?'#ccc':i===2?'#cd7f32':'#5a7890';
+    aRows+=makeRow([[i+1,'text-align:center;font-weight:900;color:'+medal],[m.nick,'font-weight:700'],['🎯 '+s.assists,'text-align:center;color:#4aa8e8;font-weight:900']]);
   });
-  if(!asstRows) asstRows = '<tr><td colspan="3" style="text-align:center;color:#5a7890;padding:8px">データなし</td></tr>';
+  if(!aRows) aRows='<tr><td colspan="3" style="text-align:center;color:#5a7890;padding:8px">データなし</td></tr>';
 
   // 選手別成績
-  const plData = getMB().map(m=>({m,s:pStats[m.num]||{pts:0,gkPts:0,goals:0,assists:0,played:0}}))
+  let plRows='';
+  getMB().map(m=>({m,s:pStats[m.num]||{pts:0,gkPts:0,goals:0,assists:0,played:0}}))
     .filter(({s})=>s.played>0||s.goals>0||s.assists>0)
-    .sort((a,b)=>b.s.pts-a.s.pts||b.s.goals-a.s.goals||b.s.assists-a.s.assists);
-  let plRows = '';
-  plData.forEach(({m,s})=>{
-    plRows += '<tr><td style="font-weight:700;padding:4px 8px">'+(m.num)+' '+m.nick+'</td>'
-      +'<td style="text-align:center">'+(s.played||'–')+'</td>'
-      +'<td style="text-align:center;color:#f0c040">'+(s.pts||'–')+'</td>'
-      +'<td style="text-align:center">'+(s.gkPts||'–')+'</td>'
-      +'<td style="text-align:center;color:#30d080">'+(s.goals>0?'⚽ '+s.goals:'–')+'</td>'
-      +'<td style="text-align:center;color:#4aa8e8">'+(s.assists>0?'🎯 '+s.assists:'–')+'</td></tr>';
-  });
-  if(!plRows) plRows = '<tr><td colspan="6" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
+    .sort((a,b)=>b.s.pts-a.s.pts||b.s.goals-a.s.goals||b.s.assists-a.s.assists)
+    .forEach(({m,s})=>{
+      plRows+=makeRow([[m.num+' '+m.nick,'font-weight:700'],[s.played||'–','text-align:center'],[s.pts||'–','text-align:center;color:#f0c040'],[s.gkPts||'–','text-align:center'],[s.goals>0?'⚽ '+s.goals:'–','text-align:center;color:#30d080'],[s.assists>0?'🎯 '+s.assists:'–','text-align:center;color:#4aa8e8']]);
+    });
+  if(!plRows) plRows='<tr><td colspan="6" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
 
   // 対戦成績
-  let oppRows = '';
+  let oppRows='';
   Object.entries(oppStats).sort((a,b)=>(b[1].w-b[1].l)-(a[1].w-a[1].l)).forEach(([opp,s])=>{
-    const diff = s.gf - s.ga;
-    const dc = diff>0?'#30d080':diff<0?'#ff5060':'#5a7890';
-    oppRows += '<tr><td style="font-weight:700;padding:4px 8px">'+opp+'</td>'
-      +'<td style="text-align:center">'+(s.w+s.d+s.l)+'</td>'
-      +'<td style="text-align:center;color:#30d080;font-weight:700">'+s.w+'</td>'
-      +'<td style="text-align:center;color:#5a7890">'+s.d+'</td>'
-      +'<td style="text-align:center;color:#ff5060;font-weight:700">'+s.l+'</td>'
-      +'<td style="text-align:center">'+s.gf+'</td>'
-      +'<td style="text-align:center">'+s.ga+'</td>'
-      +'<td style="text-align:center;color:'+dc+';font-weight:700">'+(diff>0?'+':'')+diff+'</td></tr>';
+    const diff=s.gf-s.ga;
+    const dc=diff>0?'#30d080':diff<0?'#ff5060':'#5a7890';
+    oppRows+=makeRow([[opp,'font-weight:700'],[s.w+s.d+s.l,'text-align:center'],[s.w,'text-align:center;color:#30d080;font-weight:700'],[s.d,'text-align:center;color:#5a7890'],[s.l,'text-align:center;color:#ff5060;font-weight:700'],[s.gf,'text-align:center'],[s.ga,'text-align:center'],[(diff>0?'+':'')+diff,'text-align:center;font-weight:700;color:'+dc]]);
   });
-  if(!oppRows) oppRows = '<tr><td colspan="8" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
+  if(!oppRows) oppRows='<tr><td colspan="8" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
 
   // 試合一覧
-  let matchRows = '';
+  let mRows='';
   [...filtered].reverse().forEach(m=>{
     const f=(m.score&&m.score.own||[0,0,0,0]).reduce((a,b)=>a+b,0);
     const a=(m.score&&m.score.opp||[0,0,0,0]).reduce((a,b)=>a+b,0);
@@ -1981,47 +1972,35 @@ function renderStats(){
     const lgc=m.league==='都リーグ'?'rgba(74,168,232,.3)':m.league==='世田谷リーグ'?'rgba(155,89,182,.3)':'rgba(255,255,255,.08)';
     const lgt=m.league==='都リーグ'?'#7ac0f0':m.league==='世田谷リーグ'?'#c090e0':'#aaa';
     const st=(m.goals||[]).filter(g=>g.scorer).map(g=>g.assist?gnk(g.scorer)+'('+gnk(g.assist)+')':gnk(g.scorer)).join('、');
-    const ds=m.date?m.date.replace(/(\d{4})-(\d{2})-(\d{2})/,'$1/$2/$3'):'-';
-    matchRows += '<tr>'
+    const ds=m.date?m.date.replace(/(\d{4})-(\d{2})-(\d{2})/,'$2/$3'):'';
+    mRows+='<tr>'
       +'<td style="white-space:nowrap;font-size:11px;padding:4px 6px">'+ds+'</td>'
-      +'<td style="padding:4px 6px"><span style="font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700;background:'+lgc+';color:'+lgt+'">'+lgb+'</span></td>'
+      +'<td style="padding:4px 6px"><span style="font-size:10px;padding:2px 5px;border-radius:4px;font-weight:700;background:'+lgc+';color:'+lgt+'">'+lgb+'</span></td>'
       +'<td style="font-weight:700;white-space:nowrap;padding:4px 6px">'+m.opponent+'</td>'
-      +'<td style="font-size:11px;color:#5a7890;white-space:nowrap;padding:4px 6px">'+(m.venue||'')+'</td>'
+      +'<td style="font-size:11px;color:#5a7890;padding:4px 6px">'+(m.venue||'')+'</td>'
       +'<td style="font-weight:800;color:'+rc+';text-align:center;padding:4px 6px">'+res+'</td>'
-      +'<td style="font-weight:700;text-align:center;white-space:nowrap;padding:4px 6px"><span style="color:#30d080">'+f+'</span><span style="color:#5a7890"> - </span><span style="color:#ff5060">'+a+'</span></td>'
+      +'<td style="text-align:center;white-space:nowrap;padding:4px 6px;font-weight:700"><span style="color:#30d080">'+f+'</span><span style="color:#5a7890"> - </span><span style="color:#ff5060">'+a+'</span></td>'
       +'<td style="font-size:11px;padding:4px 6px">'+(st||'–')+'</td>'
       +'</tr>';
   });
-  if(!matchRows) matchRows = '<tr><td colspan="7" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
-
-  const tblStyle = 'width:100%;border-collapse:collapse;font-size:12px';
-  const thStyle = 'background:rgba(0,0,0,.3);color:#5a7890;padding:5px 8px;font-size:10px;font-weight:700;white-space:nowrap';
-  const secStyle = 'background:#0d1f32;border:1px solid #1a3050;border-radius:12px;padding:10px 12px';
-  const secTStyle = 'font-size:13px;font-weight:700;color:#f0c040;margin-bottom:8px;border-bottom:1px solid #1a3050;padding-bottom:6px';
+  if(!mRows) mRows='<tr><td colspan="7" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
 
   sv.innerHTML =
-    '<div style="'+secStyle+';display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
-      +'<b style="font-size:14px;color:#f0c040">📊 年間集計</b>'
-      +'<select onchange="S.statsYear=parseInt(this.value);renderStats()" style="background:#0d1f32;color:#ddeaf8;border:1px solid #1a3050;border-radius:6px;padding:4px 8px;font-size:12px">'+yearBtns+'</select>'
-    +'</div>'
-    +'<div style="display:flex;flex-wrap:wrap;gap:4px">'+lgBtns+'</div>'
-    +'<div style="'+secStyle+';display:flex;gap:16px;flex-wrap:wrap;align-items:center">'
-      +'<div style="display:flex;flex-direction:column;align-items:center"><span style="font-size:10px;color:#5a7890">試合数</span><span style="font-size:22px;font-weight:900">'+mc+'</span></div>'
-      +'<div style="display:flex;flex-direction:column;align-items:center"><span style="font-size:10px;color:#5a7890">勝率</span><span style="font-size:22px;font-weight:900;color:#f0c040">'+wr+'%</span></div>'
-      +'<div style="display:flex;gap:12px;align-items:center">'
-        +'<span style="font-weight:700;color:#30d080;font-size:18px">'+wins+'勝</span>'
-        +'<span style="color:#5a7890;font-size:18px">'+draws+'分</span>'
-        +'<span style="font-weight:700;color:#ff5060;font-size:18px">'+losses+'負</span>'
-      +'</div>'
-      +'<div style="display:flex;flex-direction:column;align-items:center"><span style="font-size:10px;color:#5a7890">得点/失点</span><span style="font-size:18px;font-weight:900"><span style="color:#30d080">'+gf+'</span><span style="color:#5a7890;font-size:12px"> – </span><span style="color:#ff5060">'+ga+'</span></span></div>'
-    +'</div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-      +'<div style="'+secStyle+';flex:1;min-width:200px"><div style="'+secTStyle+'">⚽ 得点ランキング</div><div style="overflow-x:auto"><table style="'+tblStyle+'"><thead><tr><th style="'+thStyle+'">#</th><th style="'+thStyle+';text-align:left">選手</th><th style="'+thStyle+'">得点</th></tr></thead><tbody>'+goalRows+'</tbody></table></div></div>'
-      +'<div style="'+secStyle+';flex:1;min-width:200px"><div style="'+secTStyle+'">🎯 アシストランキング</div><div style="overflow-x:auto"><table style="'+tblStyle+'"><thead><tr><th style="'+thStyle+'">#</th><th style="'+thStyle+';text-align:left">選手</th><th style="'+thStyle+'">A</th></tr></thead><tbody>'+asstRows+'</tbody></table></div></div>'
-    +'</div>'
-    +'<div style="'+secStyle+'"><div style="'+secTStyle+'">選手別成績</div><div style="overflow-x:auto"><table style="'+tblStyle+'"><thead><tr><th style="'+thStyle+';text-align:left">選手</th><th style="'+thStyle+'">出場</th><th style="'+thStyle+'">FLD</th><th style="'+thStyle+'">GK</th><th style="'+thStyle+'">得点</th><th style="'+thStyle+'">A</th></tr></thead><tbody>'+plRows+'</tbody></table></div></div>'
-    +'<div style="'+secStyle+'"><div style="'+secTStyle+'">対戦成績</div><div style="overflow-x:auto"><table style="'+tblStyle+'"><thead><tr><th style="'+thStyle+';text-align:left">相手</th><th style="'+thStyle+'">試</th><th style="'+thStyle+'">勝</th><th style="'+thStyle+'">分</th><th style="'+thStyle+'">負</th><th style="'+thStyle+'">得</th><th style="'+thStyle+'">失</th><th style="'+thStyle+'">差</th></tr></thead><tbody>'+oppRows+'</tbody></table></div></div>'
-    +'<div style="'+secStyle+'"><div style="'+secTStyle+'">試合一覧</div><div style="overflow-x:auto"><table style="'+tblStyle+'"><thead><tr><th style="'+thStyle+';text-align:left">日付</th><th style="'+thStyle+'">区分</th><th style="'+thStyle+';text-align:left">相手</th><th style="'+thStyle+';text-align:left">会場</th><th style="'+thStyle+'">結果</th><th style="'+thStyle+'">スコア</th><th style="'+thStyle+';text-align:left">得点者(A)</th></tr></thead><tbody>'+matchRows+'</tbody></table></div></div>';
+    '<div style="'+SEC+';display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:14px;color:#f0c040">📊 年間集計</b>'+yearSel+'</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:4px">'+lgBtns+'</div>'
+   +'<div style="'+SEC+';display:flex;gap:16px;flex-wrap:wrap;align-items:center">'
+     +'<div style="display:flex;flex-direction:column;align-items:center"><span style="font-size:10px;color:#5a7890">試合数</span><span style="font-size:22px;font-weight:900">'+mc2+'</span></div>'
+     +'<div style="display:flex;flex-direction:column;align-items:center"><span style="font-size:10px;color:#5a7890">勝率</span><span style="font-size:22px;font-weight:900;color:#f0c040">'+wr+'%</span></div>'
+     +'<div style="display:flex;gap:12px;align-items:center"><span style="font-weight:700;color:#30d080;font-size:18px">'+wins+'勝</span><span style="color:#5a7890;font-size:18px">'+draws+'分</span><span style="font-weight:700;color:#ff5060;font-size:18px">'+losses+'負</span></div>'
+     +'<div style="display:flex;flex-direction:column;align-items:center"><span style="font-size:10px;color:#5a7890">得点/失点</span><span style="font-size:18px;font-weight:900"><span style="color:#30d080">'+gf+'</span><span style="color:#5a7890;font-size:12px"> - </span><span style="color:#ff5060">'+ga+'</span></span></div>'
+   +'</div>'
+   +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+     +'<div style="'+SEC+';flex:1;min-width:200px"><div style="'+SECT+'">⚽ 得点ランキング</div>'+tbl([['#',TH],['選手',THL],['得点',TH]],gRows)+'</div>'
+     +'<div style="'+SEC+';flex:1;min-width:200px"><div style="'+SECT+'">🎯 アシストランキング</div>'+tbl([['#',TH],['選手',THL],['A',TH]],aRows)+'</div>'
+   +'</div>'
+   +'<div style="'+SEC+'"><div style="'+SECT+'">選手別成績</div>'+tbl([['選手',THL],['出場',TH],['FLD',TH],['GK',TH],['得点',TH],['A',TH]],plRows)+'</div>'
+   +'<div style="'+SEC+'"><div style="'+SECT+'">対戦成績</div>'+tbl([['相手',THL],['試',TH],['勝',TH],['分',TH],['負',TH],['得',TH],['失',TH],['差',TH]],oppRows)+'</div>'
+   +'<div style="'+SEC+'"><div style="'+SECT+'">試合一覧</div>'+tbl([['日付',THL],['区',TH],['相手',THL],['会場',THL],['結果',TH],['スコア',TH],['得点者(A)',THL]],mRows)+'</div>';
 }
 
 // ══════════════════════════════════════════════════════
