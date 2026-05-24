@@ -1293,25 +1293,17 @@ function sbMems(){
 
 // 全試合（現在+過去）を取得
 function allMatches(){
-  // 現在入力分（S.matches）に league を補完して返す
-  const current = Object.values(S.matches).map(m=>{
-    const mm = {...m};
+  const current = Object.values(S.matches || {});
 
-    // league が無い試合は、画面で選んだリーグから補完
-    // 練習試合は matchType で「練習試合」に寄せる
-    if(!mm.league){
-      if(mm.matchType === 'practice') mm.league = '練習試合';
-      else if(S.league && S.league !== '集計') mm.league = S.league;
-      else mm.league = '不明';
-    }
-    return mm;
-  });
+  const hist = Array.isArray(HIST_ALL) ? HIST_ALL : [];
 
-  // 過去データは current に無い id の分だけ追加
-  const currentIds = new Set(current.map(m=>m.id));
-  const hist = HIST_ALL.filter(m=>!currentIds.has(m.id));
+  // ✅ 重複除去
+  const ids = new Set(current.map(m=>m.id));
+  const histFiltered = hist.filter(m=>!ids.has(m.id));
 
-  return [...current, ...hist];
+  // ✅ 必ず過去データを含める
+  return [...histFiltered, ...current];
+}
 }
 
 // ── 出場ポイント計算（全試合対象）──
@@ -1453,7 +1445,15 @@ function selRole(r){
         S.mlg = d.mlg || {};
         S.customMembers = d.customMembers || [];
         S.deletedNums = d.deletedNums || [];
-        S.matches = d.matches || {};
+        
+const remoteMatches = d.matches || {};
+
+// ✅ マージする（上書きしない！）
+S.matches = {
+  ...S.matches,
+  ...remoteMatches
+};
+
         S.nid = d.nid || 1;
         S.cid = d.cid || null;
 
