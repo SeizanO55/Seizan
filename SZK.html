@@ -1907,44 +1907,40 @@ function getYear(d){
   }
 
   if(d.includes('/')){
-    const parts = d.split('/');
-    return parseInt(parts[2]);
+    return parseInt(d.split('/')[2]);
   }
 
   return null;
 }
 
-  // 対象試合（年 + 種別）
+
+// ✅ 対象試合（年 + 種別）
 const filtered = allM.filter(m=>{
   if(!m.date) return false;
 
-  const y = getYear(m.date);   // ✅←これに変更
+  // ✅ 年取得（両フォーマット対応）
+  let y = null;
 
+  if(m.date.includes('-')){
+    y = parseInt(m.date.split('-')[0]);
+  }else if(m.date.includes('/')){
+    const parts = m.date.split('/');
+    y = parseInt(parts[2]);
+  }
+
+  // 年フィルター
   if(y !== S.statsYear) return false;
 
+  // 種別フィルター
   if(S.statsType==='official') return m.matchType==='official';
   if(S.statsType==='practice') return m.matchType==='practice';
 
   return true;
-}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-
-  if(S.statsType==='official') return m.matchType==='official';
-  if(S.statsType==='practice') return m.matchType==='practice';
-
-  return true;
-}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  if(y !== S.statsYear) return false;
-
-  if(S.statsType==='official') return m.matchType==='official';
-  if(S.statsType==='practice') return m.matchType==='practice';
-
-  return true;
-}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    if(y !== S.statsYear) return false;
-    if(S.statsType==='official') return m.matchType==='official';
-    if(S.statsType==='practice') return m.matchType==='practice';
-    return true;
-  }).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+})
+.sort((a,b)=>{
+  // ✅ 日付で正しく並び替え
+  return new Date(b.date) - new Date(a.date);
+});
 
   // スコア合計
   let wins=0, draws=0, losses=0, gf=0, ga=0;
