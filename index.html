@@ -2411,12 +2411,16 @@ function resetCurrentMatch(){
 }
 function resetAllMatches(){
   if(!confirm('このリーグの全試合データを削除しますか？\nメンバー・出欠は保持されます。')) return;
+  const pw=prompt('確認のため監督パスワードを入力してください：');
+  if(pw!=='gakugei'){toast('パスワードが違います');return;}
   if(!confirm('本当によろしいですか？この操作は取り消せません。')) return;
   S.matches={};S.nid=1;S.cid=null;
   save();xM('reset-ov');renderTabs();renderMC();renderSB();toast('全試合データを削除しました');
 }
 function resetEverything(){
   if(!confirm('全データ（試合・メンバー・出欠・カスタム選手）を完全にリセットしますか？')) return;
+  const pw=prompt('確認のため監督パスワードを入力してください：');
+  if(pw!=='gakugei'){toast('パスワードが違います');return;}
   if(!confirm('本当によろしいですか？この操作は絶対に取り消せません。')) return;
   try{localStorage.removeItem(SK());}catch(e){}
   S.present={};S.mlg={};S.customMembers=[];S.deletedNums=[];
