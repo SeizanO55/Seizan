@@ -721,9 +721,10 @@ const SK=()=>'szk5_'+(S.league==='集計'?'都リーグ':S.league||'都リーグ
 const _RC={};  // remote cache (all leagues)
 
 function save(){
+  S._lastSaveTs=Date.now();
   try{ localStorage.setItem(SK(),JSON.stringify({present:S.present,matches:S.matches,nid:S.nid,cid:S.cid,customMembers:S.customMembers||[],deletedNums:S.deletedNums||[]})); }catch(e){}
   if(window.__remoteSave){
-    window.__remoteSave(SK(),{payload:{present:S.present,matches:S.matches,nid:S.nid,cid:S.cid,customMembers:S.customMembers||[],deletedNums:S.deletedNums||[]},ts:Date.now()}).catch(e=>console.warn(e));
+    window.__remoteSave(SK(),{payload:{present:S.present,matches:S.matches,nid:S.nid,cid:S.cid,customMembers:S.customMembers||[],deletedNums:S.deletedNums||[]},ts:S._lastSaveTs}).catch(function(e){console.warn(e);});
   }
 }
 function load(){
@@ -793,9 +794,19 @@ function goRole(r){
         const d=data.payload;
         _RC[lk]=d.matches||{};
         if(lk===SK()){
-          S.present=d.present||{}; S.matches=Object.assign({},S.matches,d.matches||{});
-          S.nid=d.nid||1; S.customMembers=d.customMembers||[]; S.deletedNums=d.deletedNums||[];
-          if(!S.cid){const k=sortedIds();S.cid=k.length?k[0]:null;}
+          // タイムスタンプで新しいデータのみ反映（削除したデータの復活を防ぐ）
+          const remoteTs=data.ts||0;
+          const localTs=S._lastSaveTs||0;
+          if(remoteTs>localTs){
+            // Firebaseのデータが新しい場合のみ上書き
+            S.present=d.present||{};
+            S.matches=d.matches||{};
+            S.nid=d.nid||1;
+            S.customMembers=d.customMembers||[];
+            S.deletedNums=d.deletedNums||[];
+            if(!S.cid){const k=sortedIds();S.cid=k.length?k[0]:null;}
+            if(S.cid&&!S.matches[S.cid]){const k=sortedIds();S.cid=k.length?k[0]:null;}
+          }
         }
         if(S.tab==='stats')renderStats();
         else{renderTabs();renderSB();renderMC();}
