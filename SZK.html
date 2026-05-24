@@ -1865,9 +1865,22 @@ function renderStats(){
   const allM = allMatches();
 
   // 年リスト
-  const years = [...new Set(
-    allM.map(m => m.date ? parseInt(m.date.split('-')[0]) : null).filter(Boolean)
-  )].sort((a,b)=>b-a);
+const years = [...new Set(
+  allM.map(m=>{
+    if(!m.date) return null;
+
+    if(m.date.includes('-')){
+      return parseInt(m.date.split('-')[0]);
+    }
+
+    if(m.date.includes('/')){
+      const parts = m.date.split('/');
+      return parseInt(parts[2]); // YYYY
+    }
+
+    return null;
+  }).filter(Boolean)
+)].sort((a,b)=>b-a);
 
   if(!years.length){
     sv.innerHTML = '<div style="padding:20px;color:var(--dim);text-align:center">データがありません</div>';
@@ -1885,11 +1898,17 @@ function renderStats(){
     <option value="official" ${S.statsType==='official'?'selected':''}>公式戦</option>
     <option value="practice" ${S.statsType==='practice'?'selected':''}>練習試合</option>
   `;
+function getYear(d){
+  if(!d) return null;
+  if(d.includes('-')) return parseInt(d.split('-')[0]);
+  if(d.includes('/')) return parseInt(d.split('/')[2]);
+  return null;
+}
 
   // 対象試合（年 + 種別）
-  const filtered = allM.filter(m=>{
-    if(!m.date) return false;
-    const y = parseInt(m.date.split('-')[0]);
+const filtered = allM.filter(m=>{
+  if(!m.date) return false;
+  const y = parseInt(m.date.split('-')[0]);
     if(y !== S.statsYear) return false;
     if(S.statsType==='official') return m.matchType==='official';
     if(S.statsType==='practice') return m.matchType==='practice';
