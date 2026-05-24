@@ -825,7 +825,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--acc)}
       <div><div class="mm-l">対戦相手</div><input type="text" id="mm-opp" placeholder="例：FC渋谷" style="width:100%"></div>
       <div><div class="mm-l">会場（任意）</div><input type="text" id="mm-ven" placeholder="例：世田谷公園G" style="width:100%"></div>
       <div>
-        <div class="mm-l">試合種別</div>
+        <div class="mm-l">リーグ</div>
+        <select id="mm-league" style="width:100%">
+          <option value="都リーグ">🏟️ 都リーグ</option>
+          <option value="世田谷リーグ">⚽ 世田谷リーグ</option>
+          <option value="練習試合">🔵 練習試合</option>
+        </select>
+      </div>
+      <div>
+        <div class="mm-l">種別</div>
         <select id="mm-type" style="width:100%">
           <option value="official">公式戦</option>
           <option value="practice">練習試合</option>
@@ -1132,7 +1140,7 @@ let S={
   matches:{},nid:1,cid:null,
   statsYear:new Date().getFullYear(),
   statsType:'all',
-  statsLeagueFilter:'全体',
+  statsLeagueFilter:'合算',
 };
 
 // MB_BASE = 元の固定メンバー
@@ -1826,20 +1834,26 @@ function renderStats(){
     return;
   }
   if(!years.includes(S.statsYear)) S.statsYear=years[0];
-  if(!S.statsLeagueFilter) S.statsLeagueFilter='全体';
+  if(!S.statsLeagueFilter) S.statsLeagueFilter='合算';
 
   const yearOpts=years.map(y=>`<option value="${y}"${y===S.statsYear?' selected':''}>${y}年</option>`).join('');
 
   // リーグタブ
-  const lgTabs=['全体','都リーグ','世田谷リーグ','練習試合'].map(lg=>`
-    <button onclick="S.statsLeagueFilter='${lg}';renderStats()"
+  const lgDefs=[
+    {key:'合算',    label:'📊 合算',      color:'var(--acc)',    textColor:'#000'},
+    {key:'都リーグ',label:'🏟️ 都リーグ',  color:'rgba(74,168,232,.35)', textColor:'#7ac0f0'},
+    {key:'世田谷リーグ',label:'⚽ 世田谷', color:'rgba(155,89,182,.35)', textColor:'#c090e0'},
+    {key:'練習試合',label:'🔵 練習試合',  color:'rgba(255,255,255,.1)', textColor:'#aaa'},
+  ];
+  const lgTabs=lgDefs.map(({key,label,color,textColor})=>`
+    <button onclick="S.statsLeagueFilter='${key}';renderStats()"
       style="padding:6px 14px;font-size:12px;font-weight:700;border-radius:7px;cursor:pointer;
-      background:${S.statsLeagueFilter===lg?'var(--acc)':'rgba(255,255,255,.08)'};
-      color:${S.statsLeagueFilter===lg?'#000':'var(--dim)'};
-      border:1px solid ${S.statsLeagueFilter===lg?'var(--acc)':'var(--bdr)'};
-      margin:2px">${lg}</button>`).join('');
+      background:${S.statsLeagueFilter===key?color:'rgba(255,255,255,.06)'};
+      color:${S.statsLeagueFilter===key?textColor:'var(--dim)'};
+      border:1px solid ${S.statsLeagueFilter===key?textColor:'var(--bdr)'};
+      margin:2px">${label}</button>`).join('');
 
-  // フィルタ
+  // フィルタ（HIST_ALL含む全データから）
   const filtered=allM.filter(m=>{
     if(!m.date) return false;
     const d=new Date(m.date);
@@ -1848,8 +1862,8 @@ function renderStats(){
     const lg=S.statsLeagueFilter;
     if(lg==='都リーグ')    return m.league==='都リーグ';
     if(lg==='世田谷リーグ') return m.league==='世田谷リーグ';
-    if(lg==='練習試合')    return m.matchType==='practice';
-    return true; // 全体
+    if(lg==='練習試合')    return m.matchType==='practice'||m.league==='練習試合';
+    return true; // 合算（全体）
   }).sort((a,b)=>new Date(a.date)-new Date(b.date));
 
   // サマリー集計
@@ -2075,36 +2089,45 @@ function openMM(mode){
   const isE=mode==='edit'&&S.cid;
   document.getElementById('mm-t').textContent=isE?'試合を編集':'試合を追加';
   document.getElementById('mm-dl').style.display=isE?'':'none';
-  if(isE){_eid=S.cid;const m=S.matches[S.cid];
+  if(isE){
+    _eid=S.cid;const m=S.matches[S.cid];
     document.getElementById('mm-date').value=m.date||'';
     document.getElementById('mm-opp').value=m.opponent||'';
     document.getElementById('mm-ven').value=m.venue||'';
+    document.getElementById('mm-league').value=m.league||'都リーグ';
     document.getElementById('mm-type').value=m.matchType||'official';
   }else{
     document.getElementById('mm-date').value=new Date().toISOString().split('T')[0];
-    document.getElementById('mm-opp').value='';document.getElementById('mm-ven').value='';
+    document.getElementById('mm-opp').value='';
+    document.getElementById('mm-ven').value='';
+    const defLg=S.league==='世田谷リーグ'?'世田谷リーグ':'都リーグ';
+    document.getElementById('mm-league').value=defLg;
     document.getElementById('mm-type').value='official';
   }
+  // リーグ選択に連動してmm-typeを自動設定
+  document.getElementById('mm-league').onchange=function(){
+    document.getElementById('mm-type').value=this.value==='練習試合'?'practice':'official';
+  };
   document.getElementById('mm-ov').classList.add('on');
 }
 function svMatch(){
   const date=document.getElementById('mm-date').value;
   const opp=document.getElementById('mm-opp').value.trim();
   const ven=document.getElementById('mm-ven').value.trim();
+  const league=document.getElementById('mm-league').value;
   const type=document.getElementById('mm-type').value;
-  if(_eid){Object.assign(S.matches[_eid],{date,opponent:opp,venue:ven,matchType:type});}
-  else{
-  const id='m'+S.nid++;
-  const em=emptyM(date,opp,ven,type);
-  em.id=id;
-
-  // ★追加：リーグを保存（集計で使う）
-  em.league = (type==='practice') ? '練習試合' : (S.league || '不明');
-
-  S.matches[id]=em;
-  S.cid=id;
-}
-  save();xM('mm-ov');renderTabs();renderMC();renderSB();toast(_eid?'試合情報を更新':'試合を追加しました');
+  if(_eid){
+    Object.assign(S.matches[_eid],{date,opponent:opp,venue:ven,matchType:type,league});
+  }else{
+    const id='m'+S.nid++;
+    const em=emptyM(date,opp,ven,type);
+    em.id=id;
+    em.league=league;
+    S.matches[id]=em;
+    S.cid=id;
+  }
+  save();xM('mm-ov');renderTabs();renderMC();renderSB();
+  toast(_eid?'試合情報を更新しました':'試合を追加しました');
 }
 function dlMatch(){
   if(!_eid||!confirm('この試合を削除しますか？'))return;
