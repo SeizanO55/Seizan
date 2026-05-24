@@ -1196,7 +1196,12 @@ function getMB(){
 }
 // 後方互換のためMBをgetterとして参照
 Object.defineProperty(window,'MB',{get:getMB});
-const SK=()=>'szk5_'+(S.league||'x');
+// SK()は常に実際のリーグキーを返す（集計ページでも都リーグをデフォルトに）
+const SK=()=>{
+  const lg = S.league;
+  if(!lg || lg==='集計' || lg==='x') return 'szk5_都リーグ';
+  return 'szk5_'+lg;
+};
 function save(){
   // 1) まず従来通り localStorage（自分の端末用）
   try{
@@ -1390,7 +1395,12 @@ function chkPW(){
 }
 function selLg(lg){
   S.league=lg;
-  if(lg==='集計'){selRole('view');return;}
+  if(lg==='集計'){
+    // 集計ページは都・世田谷両リーグのデータが必要
+    // S.leagueは'集計'のままにしてselRoleを呼ぶ
+    selRole('view');
+    return;
+  }
   document.getElementById('rl-sub').textContent=lg;showS('s-rl');
 }
 function selRole(r){
@@ -1441,12 +1451,16 @@ function selRole(r){
 function boot(){
   const isM=S.role==='manager';
   document.getElementById('app').classList.add('on');
-  document.getElementById('hdr-lg').textContent=S.league;
+  document.getElementById('hdr-lg').textContent=S.league==='集計'?'集計':S.league;
   const rb=document.getElementById('hdr-rb');
   rb.textContent=isM?'監督':'閲覧';rb.className='h-badge '+(isM?'mgr':'view');
   document.querySelectorAll('.mo').forEach(el=>el.style.display=isM?'':'none');
-  if(S.league==='集計'){setTopTab('stats');}
-  else{renderTabs();renderSB();renderMC();}
+  if(S.league==='集計'){
+    // 集計ページ：HIST_ALLで即表示（Firebase受信前でも見える）
+    setTopTab('stats');
+  } else {
+    renderTabs();renderSB();renderMC();
+  }
   setTimeout(fixHeights,100);
 }
 
@@ -1469,8 +1483,12 @@ function setTopTab(tab){
   }
   const sb=document.getElementById('sb');
   if(sb) sb.style.display=tab==='stats'?'none':'';
-  if(tab==='stats') renderStats();
-  else{renderTabs();renderMC();}
+  if(tab==='stats'){
+    // HIST_ALLはすでにあるのでFirebase待たずに即表示
+    setTimeout(renderStats, 0);
+  } else {
+    renderTabs();renderMC();
+  }
   setTimeout(fixHeights,50);
 }
 
