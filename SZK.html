@@ -1738,255 +1738,151 @@ function setSc(qi,tm,v){
 }
 
 // ══════════════════════════════════════════════════════
-// STATS VIEW
-// ══════════════════════════════════════════════════════
 function renderStats(){
-  const sv=document.getElementById('stats-view');
-  const allM=allMatches();
-  const years=[...new Set(allM.map(m=>m.date?parseInt(m.date.split('-')[0]):null).filter(Boolean))].sort((a,b)=>b-a);
-  if(!years.length){ sv.innerHTML='<div style="padding:20px;color:var(--dim);text-align:center">データがありません</div>';return; }
-  if(!years.includes(S.statsYear)) S.statsYear=years[0];
-  if(!S.statsLeagueFilter) S.statsLeagueFilter='全体';
+  const sv = document.getElementById('stats-view');
+  const allM = allMatches();
 
-  const yearOpts=years.map(y=>`<option value="${y}"${y===S.statsYear?' selected':''}>${y}年</option>`).join('');
-  const lgTabs=['全体','都リーグ','世田谷リーグ','練習試合'].map(lg=>`
-    <button onclick="S.statsLeagueFilter='${lg}';renderStats()"
-      style="padding:6px 12px;font-size:11px;font-weight:700;border-radius:6px;
-      background:${S.statsLeagueFilter===lg?'var(--acc)':'rgba(255,255,255,.08)'};
-      color:${S.statsLeagueFilter===lg?'#000':'var(--dim)'};margin-right:4px">${lg}</button>`).join('');
+  // 年取得
+  const years = [...new Set(
+    allM
+      .map(m => m.date ? parseInt(m.date.split('-')[0]) : null)
+      .filter(Boolean)
+  )].sort((a,b)=>b-a);
 
-  // Filter matches
-  const filtered=allM.filter(m=>{
-    if(!m.date)return false;
-    if(parseInt(m.date.split('-')[0])!==S.statsYear)return false;
-    if(S.statsLeagueFilter==='全体')return true;
-    if(S.statsLeagueFilter==='都リーグ')return m.league==='都リーグ';
-    if(S.statsLeagueFilter==='世田谷リーグ')return m.league==='世田谷リーグ';
-    if(S.statsLeagueFilter==='練習試合')return m.matchType==='practice';
+  if(!years.length){
+    sv.innerHTML = '<div style="padding:20px;color:var(--dim);text-align:center">データがありません</div>';
+    return;
+  }
+
+  if(!years.includes(S.statsYear)) S.statsYear = years[0];
+  if(!S.statsType) S.statsType = 'all';
+
+  // UI
+  const yearOpts = years.map(y =>
+    `<option value="${y}" ${y===S.statsYear?'selected':''}>${y}年</option>`
+  ).join('');
+
+  const typeOpts = `
+    <option value="all" ${S.statsType==='all'?'selected':''}>全試合</option>
+    <option value="official" ${S.statsType==='official'?'selected':''}>公式戦</option>
+    <option value="practice" ${S.statsType==='practice'?'selected':''}>練習試合</option>
+  `;
+
+  // フィルタ
+  const filtered = allM.filter(m=>{
+    if(!m.date) return false;
+    const y = parseInt(m.date.split('-')[0]);
+    if(y !== S.statsYear) return false;
+    if(S.statsType==='official') return m.matchType==='official';
+    if(S.statsType==='practice') return m.matchType==='practice';
     return true;
   });
 
-  // Calc summary
-  let wins=0,draws=0,losses=0,gf=0,ga=0;
-  filtered.forEach(m=>{
-    const f=(m.score&&m.score.own||[0,0,0,0]).reduce((a,b)=>a+b,0);
-    const a=(m.score&&m.score.opp||[0,0,0,0]).reduce((a,b)=>a+b,0);
-    gf+=f;ga+=a;
-    if(f>a)wins++;else if(f<a)losses++;else draws++;
-  });
-  const mc=filtered.length;
-  const winRate=mc>0?((wins/mc)*100).toFixed(1):'–';
+  // 勝敗
+  let wins=0, draws=0, losses=0, gf=0, ga=0;
 
-  // Player stats from filtered matches
-  const pStats={};
-  getMB().forEach(m=>{pStats[m.num]={pts:0,gkPts:0,goals:0,assists:0,played:0};});
-  const oppStats={};
   filtered.forEach(m=>{
-    const presentN=new Set();
+    const f = (m.score?.own || [0,0,0,0]).reduce((a,b)=>a+b,0);
+    const a = (m.score?.opp || [0,0,0,0]).reduce((a,b)=>a+b,0);
+    gf+=f; ga+=a;
+
+    if(f>a) wins++;
+    else if(f<a) losses++;
+    else draws++;
+  });
+
+  const matchCount = filtered.length;
+  const winRate = matchCount > 0 ? ((wins/matchCount)*100).toFixed(1) : '–';
+
+  // 選手集計
+  const pStats = {};
+  getMB().forEach(m=>{
+    pStats[m.num] = {pts:0, gkPts:0, goals:0, assists:0, played:0};
+  });
+
+  filtered.forEach(m=>{
+    const present = new Set();
+
     QS.forEach(q=>{
-      const pos=(m[q]&&m[q].positions)||{};
-      Object.values(pos).filter(Boolean).forEach(n=>presentN.add(n));
+      const pos = (m[q]?.positions)||{};
+      Object.values(pos).forEach(n=> present.add(n));
     });
+
     QS.forEach(q=>{
-      const pos=(m[q]&&m[q].positions)||{};
-      const onP=new Set(Object.values(pos).filter(Boolean));
-      const gkN=pos.gk||null;
-      onP.forEach(n=>{
-        if(!pStats[n])pStats[n]={pts:0,gkPts:0,goals:0,assists:0,played:0};
-        if(n===gkN)pStats[n].gkPts++;
+      const pos = (m[q]?.positions)||{};
+      const gk = pos.gk;
+
+      Object.entries(pos).forEach(([id,n])=>{
+        if(!pStats[n]) return;
+
+        if(n === gk) pStats[n].gkPts++;
         else pStats[n].pts++;
       });
     });
-    presentN.forEach(n=>{if(pStats[n])pStats[n].played++;});
-    (m.goals||[]).forEach(g=>{
-      if(g.scorer&&pStats[g.scorer])pStats[g.scorer].goals++;
-      if(g.assist&&pStats[g.assist])pStats[g.assist].assists++;
+
+    present.forEach(n=>{
+      if(pStats[n]) pStats[n].played++;
     });
-    const opp=m.opponent||'不明';
-    if(!oppStats[opp])oppStats[opp]={w:0,d:0,l:0,gf:0,ga:0};
-    const f=(m.score&&m.score.own||[0,0,0,0]).reduce((a,b)=>a+b,0);
-    const a=(m.score&&m.score.opp||[0,0,0,0]).reduce((a,b)=>a+b,0);
-    oppStats[opp].gf+=f;oppStats[opp].ga+=a;
-    if(f>a)oppStats[opp].w++;else if(f<a)oppStats[opp].l++;else oppStats[opp].d++;
+
+    (m.goals||[]).forEach(g=>{
+      if(pStats[g.scorer]) pStats[g.scorer].goals++;
+      if(pStats[g.assist]) pStats[g.assist].assists++;
+    });
   });
 
-  const plRows=getMB().map(m=>({m,s:pStats[m.num]||{pts:0,gkPts:0,goals:0,assists:0,played:0}}))
-    .filter(({s})=>s.played>0||s.goals>0||s.assists>0)
-    .sort((a,b)=>b.s.pts-a.s.pts||b.s.goals-a.s.goals||b.s.assists-a.s.assists||a.m.num-b.m.num);
+  const playerRows = getMB()
+    .map(m=>({m, s:pStats[m.num]}))
+    .filter(({s})=> s.played>0 || s.goals>0 || s.assists>0)
+    .sort((a,b)=>
+      b.s.pts - a.s.pts ||
+      b.s.goals - a.s.goals ||
+      b.s.assists - a.s.assists ||
+      a.m.num - b.m.num
+    );
 
-  const plHtml=plRows.length?plRows.map(({m,s})=>`<tr>
-    <td class="t-name">${m.num} ${m.nick}</td>
-    <td>${s.played||'–'}</td>
-    <td class="t-acc">${s.pts||'–'}</td>
-    <td>${s.gkPts||'–'}</td>
-    <td>${s.goals>0?`⚽${s.goals}`:'–'}</td>
-    <td>${s.assists>0?`🎯${s.assists}`:'–'}</td>
-  </tr>`).join(''):`<tr><td colspan="6" style="color:var(--dim);text-align:center;padding:12px">該当データなし</td></tr>`;
+  const plHtml = playerRows.length
+    ? playerRows.map(({m,s})=>`
+      <tr>
+        <td class="t-name">${m.num} ${m.nick}</td>
+        <td>${s.played||'–'}</td>
+        <td class="t-acc">${s.pts||'–'}</td>
+        <td>${s.gkPts||'–'}</td>
+        <td>${s.goals>0?`⚽${s.goals}`:'–'}</td>
+        <td>${s.assists>0?`🎯${s.assists}`:'–'}</td>
+      </tr>
+    `).join('')
+    : `<tr><td colspan="6" style="text-align:center;color:var(--dim)">データなし</td></tr>`;
 
-  const oppRows=Object.entries(oppStats).sort((a,b)=>(b[1].w-b[1].l)-(a[1].w-a[1].l));
-  const oppHtml=oppRows.length?oppRows.map(([opp,s])=>`<tr>
-    <td class="t-name">${opp}</td>
-    <td>${s.w+s.d+s.l}</td>
-    <td class="sv-win">${s.w}</td><td class="sv-draw">${s.d}</td><td class="sv-lose">${s.l}</td>
-    <td>${s.gf}</td><td>${s.ga}</td>
-    <td style="font-weight:700;color:${s.gf>s.ga?'var(--in)':s.gf<s.ga?'var(--out)':'var(--dim)'}">${s.gf>s.ga?'+':''}${s.gf-s.ga}</td>
-  </tr>`).join(''):`<tr><td colspan="8" style="color:var(--dim);text-align:center;padding:12px">該当データなし</td></tr>`;
-
-  sv.innerHTML=`
-    <div style="background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <b style="font-size:13px;color:var(--acc)">📊 年間集計</b>
-      <select onchange="S.statsYear=parseInt(this.value);renderStats()" style="font-size:12px">${yearOpts}</select>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0">${lgTabs}</div>
-    <div style="background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <span style="font-size:10px;color:var(--dim)">試合数</span>
-        <span style="font-size:20px;font-weight:900">${mc}</span>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <span style="font-size:10px;color:var(--dim)">勝率</span>
-        <span style="font-size:20px;font-weight:900;color:var(--acc)">${winRate}%</span>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <span style="font-weight:700;color:var(--in);font-size:16px">${wins}勝</span>
-        <span style="color:var(--dim);font-size:16px">${draws}分</span>
-        <span style="font-weight:700;color:var(--out);font-size:16px">${losses}負</span>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <span style="font-size:10px;color:var(--dim)">得点/失点</span>
-        <span style="font-size:16px;font-weight:900">
-          <span style="color:var(--in)">${gf}</span>
-          <span style="color:var(--dim);font-size:12px"> – </span>
-          <span style="color:var(--out)">${ga}</span>
-        </span>
-      </div>
-    </div>
-    <div class="sv-sec">
-      <div class="sv-sec-t">選手別成績</div>
-      <div style="overflow-x:auto"><table class="sv-tbl">
-        <thead><tr><th style="text-align:left">選手</th><th>出場</th><th>FLD</th><th>GK</th><th>得点</th><th>A</th></tr></thead>
-        <tbody>${plHtml}</tbody>
-      </table></div>
-    </div>
-    <div class="sv-sec">
-      <div class="sv-sec-t">対戦成績</div>
-      <div style="overflow-x:auto"><table class="sv-tbl">
-        <thead><tr><th style="text-align:left">相手</th><th>試合</th><th>勝</th><th>分</th><th>負</th><th>得</th><th>失</th><th>差</th></tr></thead>
-        <tbody>${oppHtml}</tbody>
-      </table></div>
-    </div>`;
-}
-  const sv=document.getElementById('stats-view');
-  const years=[...new Set(allMatches().map(m=>m.date?parseInt(m.date.split('-')[0]):null).filter(Boolean))].sort((a,b)=>b-a);
-  if(!years.includes(S.statsYear)&&years.length)S.statsYear=years[0];
-  const yearOpts=years.length
-    ? years.map(y=>`<option value="${y}"${y===S.statsYear?' selected':''}>${y}年</option>`).join('')
-    : `<option value="${new Date().getFullYear()}">${new Date().getFullYear()}年</option>`;
-  const typeOpts=`
-    <option value="all"${S.statsType==='all'?' selected':''}>全試合</option>
-    <option value="official"${S.statsType==='official'?' selected':''}>公式戦</option>
-    <option value="practice"${S.statsType==='practice'?' selected':''}>練習試合</option>`;
-
-  const {playerStats,oppStats,matchCount}=calcYearStats(S.statsYear,S.statsType);
-
-  // 勝敗集計
-  const allM=allMatches().filter(m=>{
-    if(!m.date)return false;
-    const y=parseInt(m.date.split('-')[0]);
-    if(y!==S.statsYear)return false;
-    if(S.statsType==='official')return m.matchType==='official';
-    if(S.statsType==='practice')return m.matchType==='practice';
-    return true;
-  });
-  let wins=0,draws=0,losses=0,gf=0,ga=0;
-  allM.forEach(m=>{
-    const f=(m.score&&m.score.own||[0,0,0,0]).reduce((a,b)=>a+b,0);
-    const a=(m.score&&m.score.opp||[0,0,0,0]).reduce((a,b)=>a+b,0);
-    gf+=f;ga+=a;
-    if(f>a)wins++;else if(f<a)losses++;else draws++;
-  });
-  const winRate=matchCount>0?((wins/matchCount)*100).toFixed(1):'–';
-
-  // Player table
-  const plRows=getMB().map(m=>{
-    const s=playerStats[m.num]||{pts:0,gkPts:0,goals:0,assists:0,played:0};
-    return{m,s};
-  }).filter(({s})=>s.played>0||s.goals>0||s.assists>0)
-    .sort((a,b)=>b.s.pts-a.s.pts||b.s.goals-a.s.goals||b.s.assists-a.s.assists||a.m.num-b.m.num);
-
-  const plHtml=plRows.length?plRows.map(({m,s})=>`<tr>
-    <td class="t-name">${m.num} ${m.nick}</td>
-    <td>${s.played||'–'}</td>
-    <td class="t-acc">${s.pts||'–'}</td>
-    <td>${s.gkPts||'–'}</td>
-    <td>${s.goals>0?`⚽ ${s.goals}`:'–'}</td>
-    <td>${s.assists>0?`🎯 ${s.assists}`:'–'}</td>
-  </tr>`).join(''):`<tr><td colspan="6" style="color:var(--dim);text-align:center;padding:12px">データなし</td></tr>`;
-
-  const oppRows=Object.entries(oppStats).sort((a,b)=>b[1].w-a[1].w);
-  const oppHtml=oppRows.length?oppRows.map(([opp,s])=>`<tr>
-    <td class="t-name">${opp}</td>
-    <td>${s.w+s.d+s.l}</td>
-    <td class="sv-win">${s.w}</td><td class="sv-draw">${s.d}</td><td class="sv-lose">${s.l}</td>
-    <td>${s.gf}</td><td>${s.ga}</td>
-    <td style="font-weight:700;color:${s.gf>s.ga?'var(--in)':s.gf<s.ga?'var(--out)':'var(--dim)'}">${s.gf>s.ga?'+':''}${s.gf-s.ga}</td>
-  </tr>`).join(''):`<tr><td colspan="8" style="color:var(--dim);text-align:center;padding:12px">データなし</td></tr>`;
-
-  sv.innerHTML=`
+  sv.innerHTML = `
     <div class="sv-head">
-      <b style="font-size:13px;color:var(--acc)">📊 年間集計</b>
-      <select onchange="S.statsYear=parseInt(this.value);renderStats()">${yearOpts}</select>
-      <select onchange="S.statsType=this.value;renderStats()">${typeOpts}</select>
+      <b>📊 年間集計</b>
+      <select onchange="S.statsYear=parseInt(this.value);renderStats()">
+        ${yearOpts}
+      </select>
+      <select onchange="S.statsType=this.value;renderStats()">
+        ${typeOpts}
+      </select>
     </div>
-    <!-- サマリー -->
-    <div style="background:var(--card);border:1px solid var(--bdr);border-radius:10px;
-      padding:10px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <span style="font-size:10px;color:var(--dim)">試合数</span>
-        <span style="font-size:20px;font-weight:900;color:var(--tx)">${matchCount}</span>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <span style="font-size:10px;color:var(--dim)">勝率</span>
-        <span style="font-size:20px;font-weight:900;color:var(--acc)">${winRate}%</span>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span style="font-weight:700;color:var(--in)">${wins}勝</span>
-        <span style="color:var(--dim)">${draws}分</span>
-        <span style="font-weight:700;color:var(--out)">${losses}負</span>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <span style="font-size:10px;color:var(--dim)">得点/失点</span>
-        <span style="font-size:16px;font-weight:900">
-          <span style="color:var(--in)">${gf}</span>
-          <span style="color:var(--dim);font-size:12px"> – </span>
-          <span style="color:var(--out)">${ga}</span>
-        </span>
-      </div>
-    </div>
-    <div class="sv-sec">
-      <div class="sv-sec-t">選手別成績</div>
-      <div style="overflow-x:auto">
-      <table class="sv-tbl">
-        <thead><tr>
-          <th style="text-align:left">選手</th>
-          <th>出場</th><th>FLDpt</th><th>GKpt</th><th>得点</th><th>A</th>
-        </tr></thead>
-        <tbody>${plHtml}</tbody>
-      </table></div>
-    </div>
-    <div class="sv-sec">
-      <div class="sv-sec-t">対戦成績</div>
-      <div style="overflow-x:auto">
-      <table class="sv-tbl">
-        <thead><tr>
-          <th style="text-align:left">対戦相手</th>
-          <th>試合</th><th>勝</th><th>分</th><th>負</th><th>得</th><th>失</th><th>差</th>
-        </tr></thead>
-        <tbody>${oppHtml}</tbody>
-      </table></div>
-    </div>`;
 
+    <div style="padding:10px">
+      試合:${matchCount} / 勝:${wins} / 分:${draws} / 負:${losses} / 勝率:${winRate}%
+    </div>
 
+    <table class="sv-tbl">
+      <thead>
+        <tr>
+          <th>選手</th>
+          <th>出場</th>
+          <th>FLD</th>
+          <th>GK</th>
+          <th>得点</th>
+          <th>A</th>
+        </tr>
+      </thead>
+      <tbody>${plHtml}</tbody>
+    </table>
+  `;
+}
 // ══════════════════════════════════════════════════════
 // PLAYER MODAL
 // ══════════════════════════════════════════════════════
