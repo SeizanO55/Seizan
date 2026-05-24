@@ -1243,14 +1243,10 @@ function sbMems(){
 // 全試合（現在+過去）を取得
 function allMatches(){
   const current = Object.values(S.matches || {});
-
   const hist = Array.isArray(HIST_ALL) ? HIST_ALL : [];
-
-  // ✅ 重複除去
+  // 重複除去（S.matchesにある試合はHIST_ALLより優先）
   const ids = new Set(current.map(m=>m.id));
   const histFiltered = hist.filter(m=>!ids.has(m.id));
-
-  // ✅ 必ず過去データを含める
   return [...histFiltered, ...current];
 }
 
@@ -1375,48 +1371,57 @@ function selRole(r){
   load();
   boot();
 
-  // リアルタイム購読開始（リーグ単位）
-  try{
-    if(window.__remoteSubscribe){
+  // Firebaseの購読開始（moduleの初期化を待つ）
+  function startSubscribe(){
+    if(!window.__remoteSubscribe){
+      // まだmoduleが初期化されていない → 完了コールバックを登録
+      window.__firebaseReadyQueue = startSubscribe;
+      return;
+    }
+    try{
       window.__remoteSubscribe(SK(), (data) => {
-        // エラー通知（権限/未作成など）
         if(data && data.__error){
           console.warn("remote subscribe error:", data.__error);
           return;
         }
-        // Firestoreにデータが無いときは何もしない
         if(!data || !data.payload) return;
 
         const d = data.payload;
-        // 重要：ここでは save() を呼ばない（ループ防止）
         S.present = d.present || {};
         S.mlg = d.mlg || {};
         S.customMembers = d.customMembers || [];
         S.deletedNums = d.deletedNums || [];
-        
-const remoteMatches = d.matches || {};
 
-// ✅ マージする（上書きしない！）
-S.matches = {
-  ...S.matches,
-  ...remoteMatches
-};
-
+        // リモートのmatches をマージ（ローカルを上書きしない）
+        const remoteMatches = d.matches || {};
+        S.matches = { ...S.matches, ...remoteMatches };
         S.nid = d.nid || 1;
-        S.cid = d.cid || null;
+
+        // cidは現在表示中のものを優先
+        if(!S.cid) S.cid = d.cid || null;
 
         // 表示更新
         if(S.topTab === 'stats'){
           renderStats();
-        }else{
+        } else {
           renderTabs();
           renderSB();
           renderMC();
         }
+        setTimeout(fixHeights, 80);
       });
+    }catch(e){
+      console.warn("subscribe setup failed", e);
     }
-  }catch(e){
-    console.warn("subscribe setup failed", e);
+  }
+
+  // module既に初期化済みならすぐ開始、そうでなければ待機
+  if(window.__firebaseReady){
+    startSubscribe();
+  } else {
+    window.__firebaseReadyQueue = startSubscribe;
+    // フォールバック：2秒後に再試行
+    setTimeout(()=>{ if(!window.__firebaseReady) startSubscribe(); }, 2000);
   }
 }
 
@@ -2424,18 +2429,12 @@ window.addEventListener('orientationchange', ()=>{ setTimeout(fixHeights,200); }
 
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
-
-  // 既存(非module)スクリプトから使えるように window に公開
   window.__FIREBASE__ = { db };
 
-  // 購読解除関数をリーグキーごとに保持
   const _unsubs = new Map();
 
-  // リアルタイム購読開始：docを監視して変更のたびに callback を呼ぶ
-  // onSnapshot は初回に現在データを返し、その後変更のたびに通知される [1](https://firebase.google.com/docs/firestore/query-data/listen)
   window.__remoteSubscribe = function(leagueKey, callback){
     const key = encodeURIComponent(leagueKey);
-    // 既存購読があれば解除
     if(_unsubs.has(key)){
       try{ _unsubs.get(key)(); }catch(e){}
       _unsubs.delete(key);
@@ -2451,7 +2450,6 @@ window.addEventListener('orientationchange', ()=>{ setTimeout(fixHeights,200); }
     return unsub;
   };
 
-  // 購読解除
   window.__remoteUnsubscribe = function(leagueKey){
     const key = encodeURIComponent(leagueKey);
     if(_unsubs.has(key)){
@@ -2460,13 +2458,18 @@ window.addEventListener('orientationchange', ()=>{ setTimeout(fixHeights,200); }
     }
   };
 
-  // Firestoreへ保存（merge=trueで上書き衝突を少し減らす）
   window.__remoteSave = async function(leagueKey, payload){
     const key = encodeURIComponent(leagueKey);
     await setDoc(doc(db, "szk", key), payload, { merge: true });
   };
 
-  console.log("Firebase realtime ready:", firebaseConfig.projectId);
+  // ★ moduleの準備完了をメインスクリプトに通知
+  // selRole()がmodule初期化前に呼ばれた場合に備えてキューを処理する
+  window.__firebaseReady = true;
+  if(typeof window.__firebaseReadyQueue === 'function'){
+    window.__firebaseReadyQueue();
+  }
+  console.log("Firebase ready:", firebaseConfig.projectId);
 </script>
 </body>
 </html>
