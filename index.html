@@ -794,6 +794,7 @@ let S={
 };
 const SK=()=>'szk5_'+(S.league==='集計'?'都リーグ':S.league||'都リーグ');
 const _RC={};  // remote cache (all leagues)
+const _deletedIds=new Set(); // 削除済み試合ID（Firebaseからの復活防止）
 
 function save(){
   S._lastSaveTs=Date.now();
@@ -1649,6 +1650,7 @@ function deleteMatch(){
   if(!_eid||!S.matches[_eid])return;
   const m=S.matches[_eid];
   if(!confirm('"'+m.opponent+'"を削除しますか？'))return;
+  _deletedIds.add(_eid);
   delete S.matches[_eid];
   const k=sortedIds();S.cid=k.length?k[0]:null;
   save();closeOv('ov-mm');renderTabs();renderMC();toast('試合を削除しました');
@@ -1665,6 +1667,7 @@ function rstPos(){
 function rstMatch(){
   if(!S.cid||!S.matches[S.cid]){toast('試合が選択されていません');return;}
   if(!confirm('"'+S.matches[S.cid].opponent+'"を削除しますか？'))return;
+  _deletedIds.add(S.cid);
   delete S.matches[S.cid];
   const k=sortedIds();S.cid=k.length?k[0]:null;
   save();closeOv('ov-rst');renderTabs();renderMC();toast('試合を削除しました');
