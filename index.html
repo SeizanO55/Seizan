@@ -799,7 +799,22 @@ function save(){
   S._lastSaveTs=Date.now();
   try{ localStorage.setItem(SK(),JSON.stringify({present:S.present,matches:S.matches,nid:S.nid,cid:S.cid,customMembers:S.customMembers||[],deletedNums:S.deletedNums||[]})); }catch(e){}
   if(window.__remoteSave){
-    window.__remoteSave(SK(),{payload:{present:S.present,matches:S.matches,nid:S.nid,cid:S.cid,customMembers:S.customMembers||[],deletedNums:S.deletedNums||[]},ts:S._lastSaveTs}).catch(function(e){console.warn(e);});
+    console.log('[SZK] Firebase save to:', SK());
+    window.__remoteSave(SK(),{payload:{present:S.present,matches:S.matches,nid:S.nid,cid:S.cid,customMembers:S.customMembers||[],deletedNums:S.deletedNums||[]},ts:S._lastSaveTs})
+      .then(function(){console.log('[SZK] Firebase save OK');})
+      .catch(function(e){console.error('[SZK] Firebase save FAILED:',e);});
+  } else {
+    console.warn('[SZK] __remoteSave not ready, retrying in 1s...');
+    setTimeout(function(){
+      if(window.__remoteSave){
+        console.log('[SZK] Firebase save retry to:', SK());
+        window.__remoteSave(SK(),{payload:{present:S.present,matches:S.matches,nid:S.nid,cid:S.cid,customMembers:S.customMembers||[],deletedNums:S.deletedNums||[]},ts:S._lastSaveTs})
+          .then(function(){console.log('[SZK] Firebase save retry OK');})
+          .catch(function(e){console.error('[SZK] Firebase save retry FAILED:',e);});
+      } else {
+        console.error('[SZK] Firebase still not ready after 1s');
+      }
+    }, 1000);
   }
 }
 function load(){
