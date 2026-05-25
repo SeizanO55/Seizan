@@ -108,8 +108,23 @@ textarea{resize:vertical}
   background:var(--card2);border-right:1px solid var(--bdr);
   display:flex;flex-direction:column;height:100%;overflow:hidden;
   transition:width .2s}
-#sb.col{width:32px}
+#sb.col{width:36px}
 #sb.col .sb-inner{display:none}
+#sb.col .sb-hd{padding:4px;justify-content:center;border-bottom:none}
+#sb.col .sb-hl,#sb.col #sb-cnt{display:none}
+/* スマホ：折りたたみ時はサイドバーを完全に隠してフローティングボタンを表示 */
+@media(max-width:600px){
+  #sb.col{width:0;border:none;overflow:visible}
+  #sb.col .sb-hd{display:none}
+  #sb-float{display:flex!important}
+}
+#sb-float{
+  display:none;position:fixed;bottom:70px;left:8px;z-index:4000;
+  width:38px;height:38px;border-radius:50%;
+  background:var(--acc);color:#000;font-size:16px;font-weight:900;
+  align-items:center;justify-content:center;
+  box-shadow:0 2px 12px rgba(0,0,0,.5);cursor:pointer;border:none;
+}
 .sb-hd{padding:6px 8px;flex-shrink:0;background:rgba(0,0,0,.3);
   border-bottom:1px solid var(--bdr);display:flex;align-items:center;
   justify-content:space-between;font-size:11px;font-weight:700;min-height:34px}
@@ -584,6 +599,7 @@ textarea{resize:vertical}
 </div>
 
 <div id="toast"></div>
+<button id="sb-float" onclick="toggleSB()">👥</button>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -843,11 +859,13 @@ function sbMems(){return S.sf==='全'?getMB():getMB().filter(m=>m.lg===S.sf);}
 // ══════ ALL MATCHES ══════
 function allMatches(){
   const cur=Object.values(S.matches||{});
-  const other=Object.values(_RC).flatMap(m=>Object.values(m||{}));
+  // _RCから現在のリーグ(SK())以外のリーグのみ取得（S.matchesと重複しないよう）
+  const otherLeagueKeys=Object.keys(_RC).filter(function(k){return k!==SK();});
+  const other=otherLeagueKeys.flatMap(function(k){return Object.values(_RC[k]||{});});
   const hist=Array.isArray(HIST_ALL)?HIST_ALL:[];
   const dyn=[...cur,...other];
-  const ids=new Set(dyn.map(m=>m.id));
-  return [...hist.filter(m=>!ids.has(m.id)),...dyn];
+  const ids=new Set(dyn.map(function(m){return m.id;}));
+  return [...hist.filter(function(m){return !ids.has(m.id);}), ...dyn];
 }
 
 // ══════ POINTS ══════
@@ -986,6 +1004,9 @@ function toggleSB(){
   S.sbCol=!S.sbCol;
   document.getElementById('sb').classList.toggle('col',S.sbCol);
   document.getElementById('sb-tbtn').textContent=S.sbCol?'▶':'◀';
+  // スマホ用フローティングボタン
+  var fb=document.getElementById('sb-float');
+  if(fb) fb.style.display=S.sbCol?'flex':'none';
 }
 function setSF(f,el){S.sf=f;document.querySelectorAll('.sf').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderSB();}
 function renderSB(){
