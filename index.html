@@ -117,6 +117,15 @@ textarea{resize:vertical}
   #sb.col{width:0;border:none;overflow:visible}
   #sb.col .sb-hd{display:none}
   #sb-float{display:flex!important}
+  /* サイドバー折りたたみ時：トークンを1.5倍に拡大 */
+  #sb.col ~ #cont .pdot,
+  #cont.sb-hidden .pdot{width:54px!important;height:54px!important}
+  #sb.col ~ #cont .p-nm,
+  #cont.sb-hidden .p-nm{font-size:13px!important;font-weight:900!important;max-width:50px!important;white-space:normal!important;word-break:break-all!important;line-height:1.15!important}
+  #sb.col ~ #cont .p-nb,
+  #cont.sb-hidden .p-nb{font-size:11px!important}
+  #sb.col ~ #cont .p-lb,
+  #cont.sb-hidden .p-lb{font-size:11px!important}
 }
 #sb-float{
   display:none;position:fixed;bottom:70px;left:8px;z-index:4000;
@@ -1007,6 +1016,9 @@ function toggleSB(){
   // スマホ用フローティングボタン
   var fb=document.getElementById('sb-float');
   if(fb) fb.style.display=S.sbCol?'flex':'none';
+  // コンテンツエリアにクラスを付与（トークンサイズ切り替え用）
+  var cont=document.getElementById('cont');
+  if(cont) cont.classList.toggle('sb-hidden',S.sbCol);
 }
 function setSF(f,el){S.sf=f;document.querySelectorAll('.sf').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderSB();}
 function renderSB(){
