@@ -1019,6 +1019,20 @@ function toggleSB(){
   // コンテンツエリアにクラスを付与（トークンサイズ切り替え用）
   var cont=document.getElementById('cont');
   if(cont) cont.classList.toggle('sb-hidden',S.sbCol);
+  // スマホ（600px以下）のときトークンサイズを変更
+  if(window.innerWidth<=600){
+    updateTokSize(S.sbCol);
+  }
+}
+function updateTokSize(big){
+  var dots=document.querySelectorAll('.pdot');
+  var nms=document.querySelectorAll('.p-nm');
+  var nbs=document.querySelectorAll('.p-nb');
+  var lbs=document.querySelectorAll('.p-lb');
+  dots.forEach(function(el){el.style.width=big?'54px':'';el.style.height=big?'54px':'';});
+  nms.forEach(function(el){el.style.fontSize=big?'13px':'';el.style.maxWidth=big?'50px':'';el.style.whiteSpace=big?'normal':'';el.style.wordBreak=big?'break-all':'';});
+  nbs.forEach(function(el){el.style.fontSize=big?'11px':'';});
+  lbs.forEach(function(el){el.style.fontSize=big?'11px':'';});
 }
 function setSF(f,el){S.sf=f;document.querySelectorAll('.sf').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderSB();}
 function renderSB(){
@@ -1114,6 +1128,8 @@ function renderMC(){
   mc.style.display='flex';mc.classList.add('on');
   const m=S.matches[S.cid];
   renderInfo(m);renderHalves(m);renderSP(m);renderGoals(m);renderComments(m);renderPts();renderScore(m);
+  // スマホで折りたたみ中ならトークンを大きく
+  if(window.innerWidth<=600&&S.sbCol) setTimeout(function(){updateTokSize(true);},50);
 }
 function fmtD(d){
   const parts=d.split('-');
