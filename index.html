@@ -873,31 +873,22 @@ function goRole(r){
           S.nid=d.nid||1;
           S.customMembers=d.customMembers||[];
           S.deletedNums=d.deletedNums||[];
-          // 試合データは「リモート優先だがコメントは手元を保持」でマージ
           var rm=d.matches||{};
-          // 削除済みIDは除外
           _deletedIds.forEach(function(id){delete rm[id];});
-          // 既存のコメント・ポジション等を保護しながらマージ
+          // リモートを完全優先、コメント入力中のもののみローカルを保持
           var merged={};
           Object.keys(rm).forEach(function(id){
             var remote=rm[id];
             var local=S.matches[id];
-            if(local){
-              // リモートのデータをベースに、コメントだけローカルを優先
-              merged[id]=Object.assign({},remote);
-              // コメントはローカルに入力中のものを優先
-              if(local.comments){
-                var mc=local.comments;
-                var rc=remote.comments||{};
-                merged[id].comments={
-                  pre:  mc.pre  ||rc.pre  ||'',
-                  first:mc.first||rc.first||'',
-                  second:mc.second||rc.second||'',
-                  post: mc.post ||rc.post ||''
-                };
-              }
-            } else {
-              merged[id]=remote;
+            merged[id]=JSON.parse(JSON.stringify(remote));
+            if(local&&local.comments){
+              var mc=local.comments,rc=remote.comments||{};
+              merged[id].comments={
+                pre:   (mc.pre   ?mc.pre   :rc.pre   ||''),
+                first: (mc.first ?mc.first :rc.first ||''),
+                second:(mc.second?mc.second:rc.second||''),
+                post:  (mc.post  ?mc.post  :rc.post  ||'')
+              };
             }
           });
           S.matches=merged;
