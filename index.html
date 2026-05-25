@@ -1224,7 +1224,7 @@ function renderHalves(m){
         +'<div class="bench-cs" ondragover="event.preventDefault()" ondrop="dpB(event,\''+q+'\')">'
           +(bcHtml||'<span style="font-size:10px;color:var(--dim)">–</span>')
         +'</div></div>'
-        +renderSubsUI(q,m,isMgr)
+        +(function(){try{return renderSubsUI(q,m,isMgr);}catch(e){console.warn('renderSubsUI error:',e);return '';}})()
       +'</div>'
     +'</div>';
   }
@@ -1907,7 +1907,7 @@ document.getElementById('pw-in').onkeydown=function(e){if(e.key==='Enter')chkPW(
 
   window.__remoteSave = async function(leagueKey, payload){
     const key = encodeURIComponent(leagueKey);
-    await setDoc(doc(db, "szk", key), payload, { merge: true });
+    await setDoc(doc(db, "szk", key), payload);
   };
 
   // ★ moduleの準備完了をメインスクリプトに通知
