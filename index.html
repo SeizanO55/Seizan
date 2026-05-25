@@ -1454,15 +1454,15 @@ function renderStats(){
   const SEC='background:#0d1f32;border:1px solid #1a3050;border-radius:12px;padding:10px 12px';
   const TH='background:rgba(0,0,0,.3);color:#5a7890;padding:5px 8px;font-size:10px;font-weight:700;text-align:center;white-space:nowrap';
 
-  // lg buttons using data-lg
+  // lg buttons using HTML string (outerHTMLだとonclickが消えるため文字列で生成)
   function lgBtn(key,label){
-    const act=S.statsLg===key;
-    const btn=document.createElement('button');
-    btn.setAttribute('data-lg',key);
-    btn.style.cssText='padding:6px 13px;font-size:12px;font-weight:700;border-radius:7px;cursor:pointer;margin:2px;border:1px solid '+(act?'#f0c040':'#1a3050')+';background:'+(act?'var(--acc)':'rgba(255,255,255,.06)')+';color:'+(act?'#000':'#5a7890');
-    btn.textContent=label;
-    btn.onclick=function(){S.statsLg=this.getAttribute('data-lg');renderStats();};
-    return btn.outerHTML;
+    var act=S.statsLg===key;
+    var border=act?'#f0c040':'#1a3050';
+    var bg=act?'var(--acc)':'rgba(255,255,255,.06)';
+    var color=act?'#000':'#5a7890';
+    return '<button data-lg="'+key+'" onclick="S.statsLg=this.getAttribute(\'data-lg\');renderStats()"'
+      +' style="padding:6px 13px;font-size:12px;font-weight:700;border-radius:7px;cursor:pointer;margin:2px;'
+      +'border:1px solid '+border+';background:'+bg+';color:'+color+'">'+label+'</button>';
   }
   const lgBtns=lgBtn('合算','📊 合算')+lgBtn('都リーグ','🏟️ 都リーグ')+lgBtn('世田谷リーグ','⚽ 世田谷')+lgBtn('練習試合','🔵 練習');
 
