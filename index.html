@@ -1087,18 +1087,17 @@ function renderHalves(m){
       const pn=pos[p.id]||null;
       const pl=pn?gm(pn):null;
       const fil=!!pl,chg=fil&&ins.includes(pn),isGK=p.lb==='GK';
-      let cls='tok'+(fil?' fil':'')+(chg?' chg':'')+(isGK?' gk':'');
-      let inner=fil
+      var cls='tok'+(fil?' fil':'')+(chg?' chg':'')+(isGK?' gk':'');
+      var inner=fil
         ?('<span class="p-nb">'+pl.num+'</span><span class="p-nm">'+pl.nick+'</span>')
         :('<span class="p-lb">'+p.lb+'</span>');
-      var el=document.createElement('div');el.className=cls;
-      el.style.cssText='left:'+p.x+'%;top:'+p.y+'%;position:absolute;transform:translate(-50%,-50%);z-index:10;cursor:pointer;touch-action:none;user-select:none';
-      el.setAttribute('data-q',q);el.setAttribute('data-pid',p.id);
-      el.innerHTML='<div class="pdot">'+inner+'</div>';
-      if(isMgr)el.onclick=function(){openPM(this.getAttribute('data-q'),this.getAttribute('data-pid'));};
-      el.addEventListener('dragover',function(e){e.preventDefault();});
-      el.addEventListener('drop',function(e){dp(e,this.getAttribute('data-q'),this.getAttribute('data-pid'));});
-      return el.outerHTML;
+      // data属性でq/pidを渡しonclickをHTML属性で設定（outerHTMLでイベントが消える問題を回避）
+      var onclk=isMgr?' onclick="openPM(this.dataset.q,this.dataset.pid)"':'';
+      return '<div class="'+cls+'" data-q="'+q+'" data-pid="'+p.id+'"'
+        +' style="left:'+p.x+'%;top:'+p.y+'%;position:absolute;transform:translate(-50%,-50%);z-index:10;cursor:pointer;touch-action:none;user-select:none"'
+        +onclk
+        +' ondragover="event.preventDefault()" ondrop="dp(event,this.dataset.q,this.dataset.pid)">'
+        +'<div class="pdot">'+inner+'</div></div>';
     }).join('');
     const foOpts=Object.keys(FORMS).map(f=>'<option value="'+f+'"'+(f===form?' selected':'')+'>'+f+'</option>').join('');
     const chHtml=(ins.length||outs.length)
