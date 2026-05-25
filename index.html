@@ -809,19 +809,39 @@ function goRole(r){
         const d=data.payload;
         _RC[lk]=d.matches||{};
         if(lk===SK()){
-          // タイムスタンプで新しいデータのみ反映（削除したデータの復活を防ぐ）
-          const remoteTs=data.ts||0;
-          const localTs=S._lastSaveTs||0;
-          if(remoteTs>localTs){
-            // Firebaseのデータが新しい場合のみ上書き
-            S.present=d.present||{};
-            S.matches=d.matches||{};
-            S.nid=d.nid||1;
-            S.customMembers=d.customMembers||[];
-            S.deletedNums=d.deletedNums||[];
-            if(!S.cid){const k=sortedIds();S.cid=k.length?k[0]:null;}
-            if(S.cid&&!S.matches[S.cid]){const k=sortedIds();S.cid=k.length?k[0]:null;}
-          }
+          S.present=d.present||{};
+          S.nid=d.nid||1;
+          S.customMembers=d.customMembers||[];
+          S.deletedNums=d.deletedNums||[];
+          // 試合データは「リモート優先だがコメントは手元を保持」でマージ
+          var rm=d.matches||{};
+          // 削除済みIDは除外
+          _deletedIds.forEach(function(id){delete rm[id];});
+          // 既存のコメント・ポジション等を保護しながらマージ
+          var merged={};
+          Object.keys(rm).forEach(function(id){
+            var remote=rm[id];
+            var local=S.matches[id];
+            if(local){
+              // リモートのデータをベースに、コメントだけローカルを優先
+              merged[id]=Object.assign({},remote);
+              // コメントはローカルに入力中のものを優先
+              if(local.comments){
+                var mc=local.comments;
+                var rc=remote.comments||{};
+                merged[id].comments={
+                  pre:  mc.pre  ||rc.pre  ||'',
+                  first:mc.first||rc.first||'',
+                  second:mc.second||rc.second||'',
+                  post: mc.post ||rc.post ||''
+                };
+              }
+            } else {
+              merged[id]=remote;
+            }
+          });
+          S.matches=merged;
+          if(!S.cid||!S.matches[S.cid]){var k=sortedIds();S.cid=k.length?k[0]:null;}
         }
         if(S.tab==='stats')renderStats();
         else{renderTabs();renderSB();renderMC();}
