@@ -176,6 +176,10 @@ textarea{resize:vertical}
 .qc-sp{flex:1}
 .qc-cp{background:rgba(74,168,232,.12);color:#5ab8f0;font-size:9px;padding:2px 6px;border:1px solid rgba(74,168,232,.24)}
 .ch-row{display:flex;gap:3px;flex-wrap:wrap;padding:2px 8px}
+.sub-box{background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:7px;padding:6px 8px;margin-top:4px}
+.sub-t{font-size:10px;font-weight:700;color:var(--acc);margin-bottom:5px}
+.sub-row{display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap}
+.sub-lbl{font-size:9px;color:var(--dim);width:28px;flex-shrink:0;font-weight:700}
 .ch{font-size:9px;padding:2px 5px;border-radius:7px;font-weight:700}
 .ch.in{background:rgba(48,208,128,.13);color:var(--in);border:1px solid rgba(48,208,128,.26)}
 .ch.out{background:rgba(255,80,96,.13);color:var(--out);border:1px solid rgba(255,80,96,.26)}
@@ -280,6 +284,7 @@ textarea{resize:vertical}
 .pq{background:rgba(74,168,232,.1);border-radius:3px;padding:1px 4px}
 .pq.ok{background:rgba(34,160,80,.2);color:#88dda8}
 .pq.gk{background:rgba(240,130,0,.2);color:#f0a040}
+.pq.sub{background:rgba(74,168,232,.2);color:#7ac0f0}
 
 /* STATS VIEW */
 #sv{display:none;flex-direction:column;gap:8px;padding:4px}
@@ -988,9 +993,18 @@ function renderSB(){
     QS.forEach(function(q){
       const pos=(m[q]&&m[q].positions)||{};
       const gkN=pos.gk||null;
+      // Q最初から出た選手：1pt（GK除く）
       Object.values(pos).filter(Boolean).forEach(function(n){
         if(!p[n]&&p[n]!==0)p[n]=0;
-        if(n!==gkN)p[n]=(p[n]||0)+1; // フィールドのみカウント
+        if(n!==gkN)p[n]=(p[n]||0)+1;
+      });
+      // 途中交代でINした選手：0.5pt、OUTした選手は既に1pt付与済み
+      var subs=(m[q]&&m[q].subs)||[];
+      subs.forEach(function(s){
+        if(s.in){
+          if(p[s.in]===undefined||p[s.in]===null)p[s.in]=0;
+          p[s.in]=(p[s.in]||0)+0.5;
+        }
       });
     });
     return p;
@@ -1083,6 +1097,70 @@ function renderInfo(m){
 }
 
 // ══════ HALVES ══════
+
+// ══════ Q内途中交代 ══════
+function renderSubsUI(q, m, isMgr){
+  var subs = (m[q]&&m[q].subs)||[];
+  var pres = getMB().filter(function(p){return S.present[p.num];});
+  var opts = '<option value="">-</option>'+pres.map(function(p){return '<option value="'+p.num+'">'+p.num+' '+p.nick+'</option>';}).join('');
+
+  var rows = subs.map(function(s,i){
+    return '<div class="sub-row">'
+      +'<span class="sub-lbl">'+( s.minute?s.minute+'分':'')+'</span>'
+      +'<span class="ch out" style="font-size:10px">OUT #'+gnn(s.out)+' '+gnk(s.out)+'</span>'
+      +'<span style="color:var(--dim);font-size:10px">→</span>'
+      +'<span class="ch in" style="font-size:10px">IN #'+gnn(s.in)+' '+gnk(s.in)+'</span>'
+      +(isMgr?'<button onclick="delSub(\''+q+'\','+i+')" style="background:none;color:var(--out);font-size:13px;padding:0;width:18px;height:18px;border-radius:50%;flex-shrink:0">×</button>':'')
+      +'</div>';
+  }).join('');
+
+  var addForm = isMgr ? (
+    '<div class="sub-row" id="subform-'+q+'">'
+    +'<input type="number" id="sub-min-'+q+'" placeholder="分" min="1" max="25" style="width:44px;font-size:11px;padding:3px 5px;border-radius:5px;background:var(--card);color:var(--tx);border:1px solid var(--bdr)">'
+    +'<span class="sub-lbl" style="width:auto;color:var(--out)">OUT</span>'
+    +'<select id="sub-out-'+q+'" style="flex:1;min-width:80px;font-size:11px;background:var(--card);color:var(--tx);border:1px solid var(--bdr);border-radius:6px;padding:3px 5px">'+opts+'</select>'
+    +'<span class="sub-lbl" style="width:auto;color:var(--in)">IN</span>'
+    +'<select id="sub-in-'+q+'" style="flex:1;min-width:80px;font-size:11px;background:var(--card);color:var(--tx);border:1px solid var(--bdr);border-radius:6px;padding:3px 5px">'+opts+'</select>'
+    +'<button onclick="addSub(\''+q+'\')" style="background:rgba(34,160,80,.2);color:var(--g2);font-size:11px;padding:3px 8px;border:1px solid rgba(34,160,80,.3);border-radius:6px;white-space:nowrap">＋追加</button>'
+    +'</div>'
+  ) : '';
+
+  var hasData = rows || isMgr;
+  if(!hasData) return '';
+  return '<div class="sub-box">'
+    +'<div class="sub-t">🔄 Q内途中交代（0.5pt）</div>'
+    +rows
+    +addForm
+    +'</div>';
+}
+
+function addSub(q){
+  if(!S.cid) return;
+  var m = S.matches[S.cid];
+  var minEl  = document.getElementById('sub-min-'+q);
+  var outEl  = document.getElementById('sub-out-'+q);
+  var inEl   = document.getElementById('sub-in-'+q);
+  var outNum = parseInt(outEl.value)||null;
+  var inNum  = parseInt(inEl.value)||null;
+  var minute = parseInt(minEl.value)||null;
+  if(!outNum || !inNum){ toast('OUTとINの選手を選択してください'); return; }
+  if(outNum===inNum){ toast('同じ選手は選択できません'); return; }
+  if(!m[q].subs) m[q].subs=[];
+  m[q].subs.push({out:outNum, in:inNum, minute:minute});
+  save();
+  renderHalves(m); renderPts(); renderSB();
+  toast('途中交代を追加しました');
+}
+
+function delSub(q,i){
+  if(!S.cid) return;
+  var m = S.matches[S.cid];
+  if(!m[q].subs) return;
+  m[q].subs.splice(i,1);
+  save();
+  renderHalves(m); renderPts(); renderSB();
+}
+
 function renderHalves(m){
   const isMgr=S.role==='manager';
   function qCard(qi){
@@ -1146,6 +1224,7 @@ function renderHalves(m){
         +'<div class="bench-cs" ondragover="event.preventDefault()" ondrop="dpB(event,\''+q+'\')">'
           +(bcHtml||'<span style="font-size:10px;color:var(--dim)">–</span>')
         +'</div></div>'
+        +renderSubsUI(q,m,isMgr)
       +'</div>'
     +'</div>';
   }
@@ -1254,23 +1333,35 @@ function saveCm(key,val){if(!S.cid)return;const m=S.matches[S.cid];if(!m.comment
 // ══════ POINTS TABLE ══════
 function renderPts(){
   const m=S.matches[S.cid];if(!m){document.getElementById('pts-sec').innerHTML='';return;}
-  const pres=getMB().filter(p=>S.present[p.num]);if(!pres.length){document.getElementById('pts-sec').innerHTML='';return;}
+  const pres=getMB().filter(function(p){return S.present[p.num];});
+  if(!pres.length){document.getElementById('pts-sec').innerHTML='';return;}
   const rows=pres.map(function(p){
-    const qs=QS.map(function(q){
-      const pos=(m[q]&&m[q].positions)||{};
-      return{played:Object.values(pos).includes(p.num),isGK:pos.gk===p.num};
+    var gkP=0,fldP=0;
+    var qCells=QS.map(function(q){
+      var pos=(m[q]&&m[q].positions)||{};
+      var subs=(m[q]&&m[q].subs)||[];
+      var isStart=Object.values(pos).includes(p.num);
+      var isGK=pos.gk===p.num;
+      var isSubIn=subs.some(function(s){return s.in===p.num;});
+      if(isStart&&isGK)gkP++;
+      else if(isStart)fldP++;
+      else if(isSubIn)fldP+=0.5;
+      var mark=isStart?(isGK?'GK':'●'):isSubIn?'½':'–';
+      var cls=isStart?(isGK?' gk':' ok'):isSubIn?' sub':'';
+      return '<td><span class="pq'+cls+'">'+mark+'</span></td>';
     });
-    const gkP=qs.filter(r=>r.isGK).length;
-    const fldP=qs.filter(r=>r.played&&!r.isGK).length;
-    return {p,qs,gkP,fldP};
-  }).sort((a,b)=>b.fldP-a.fldP||a.p.num-b.p.num);
-  const thead='<tr><th style="text-align:left">選手</th>'+QL.map(l=>'<th>'+l+'</th>').join('')+'<th>FLD</th><th>GK</th><th>計</th></tr>';
-  const tbody=rows.map(function(r){
-    return '<tr><td class="pn">'+r.p.nick+'</td>'
-      +r.qs.map(function(x){return '<td><span class="pq'+(x.played?(x.isGK?' gk':' ok'):'')+'">'+( x.played?(x.isGK?'GK':'●'):'–')+'</span></td>';}).join('')
-      +'<td>'+(r.fldP||'-')+'</td><td>'+(r.gkP||'-')+'</td><td class="ptot">'+(r.fldP+r.gkP||'-')+'</td></tr>';
+    return{p:p,qCells:qCells,gkP:gkP,fldP:fldP};
+  }).sort(function(a,b){return b.fldP-a.fldP||a.p.num-b.p.num;});
+  var thead='<tr><th style="text-align:left">選手</th>'+QL.map(function(l){return '<th>'+l+'</th>';}).join('')+'<th>FLD</th><th>GK</th><th>計</th></tr>';
+  var tbody=rows.map(function(r){
+    var tot=r.fldP+r.gkP;
+    return '<tr><td class="pn">'+r.p.nick+'</td>'+r.qCells.join('')
+      +'<td>'+(r.fldP?r.fldP:'-')+'</td><td>'+(r.gkP||'-')+'</td>'
+      +'<td class="ptot">'+(tot?tot:'-')+'</td></tr>';
   }).join('');
-  document.getElementById('pts-sec').innerHTML='<div class="pts-t">📊 出場ポイント（FLD=1pt/Q・GK別）</div><div style="overflow-x:auto"><table class="pts-tbl"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></div>';
+  document.getElementById('pts-sec').innerHTML=
+    '<div class="pts-t">📊 出場ポイント（●=1pt ½=0.5pt GK別）</div>'
+    +'<div style="overflow-x:auto"><table class="pts-tbl"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></div>';
 }
 
 // ══════ SCORE ══════
