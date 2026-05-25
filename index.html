@@ -722,7 +722,16 @@ const FORMS={
 const DF='4-4-2';
 const QS=['q1','q2','q3','q4'];
 const QL=['1Q','2Q','3Q','4Q'];
-const SP_TYPES=['CK','FK','PK','TK','審判1','審判2','BP1','BP2','BP3','BP4','キリン1','キリン2'];
+// セットプレーグループ定義
+const SP_GROUPS=[
+  {label:'CK・FK キッカー',  keys:['CK・FK 1','CK・FK 2'],   icon:'🅰️'},
+  {label:'PK・ゴール前FK',  keys:['PK・FK 1','PK・FK 2'],   icon:'🎯'},
+  {label:'TK（スローイン）', keys:['TK 1','TK 2'],           icon:'🤚'},
+  {label:'審判',            keys:['審判1','審判2'],           icon:'🟨'},
+  {label:'BP',              keys:['BP1','BP2','BP3','BP4'], icon:'📌'},
+  {label:'キリン',           keys:['キリン1','キリン2'],       icon:'🦒'},
+];
+const SP_TYPES=SP_GROUPS.flatMap(function(g){return g.keys;});
 
 
 
@@ -1154,18 +1163,30 @@ function cpQ(toQ,fromQ){
 function renderSP(m){
   const isMgr=S.role==='manager';
   const sp=m.setpieces||{};
-  const pres=getMB().filter(p=>S.present[p.num]);
-  const opts='<option value="">未設定</option>'+pres.map(p=>'<option value="'+p.num+'">'+p.num+' '+p.nick+'</option>').join('');
-  const rows=SP_TYPES.map(function(t){
-    const sel=opts.replace('value="'+sp[t]+'"','value="'+sp[t]+'" selected');
-    return '<div class="sp-r"><span class="sp-l">'+t+'</span>'
-      +(isMgr?'<select style="flex:1;font-size:11px;background:var(--card);color:var(--tx);border:1px solid var(--bdr);border-radius:6px;padding:3px 6px" onchange="setSP(\''+t+'\',this.value)">'+sel+'</select>'
-             :'<span style="font-size:11px">'+(sp[t]?'#'+gnn(sp[t])+' '+gnk(sp[t]):'-')+'</span>')
+  const pres=getMB().filter(function(p){return S.present[p.num];});
+  const opts='<option value="">未設定</option>'+pres.map(function(p){return '<option value="'+p.num+'">'+p.num+' '+p.nick+'</option>';}).join('');
+  function selHtml(key){
+    var v=sp[key]||'';
+    return opts.replace('value="'+v+'"','value="'+v+'" selected');
+  }
+  const groups=SP_GROUPS.map(function(g){
+    const cols=g.keys.map(function(key){
+      var no=key.replace(/^.*\s/,''); // 末尾の番号だけ表示
+      return '<div style="display:flex;align-items:center;gap:4px;flex:1;min-width:120px">'
+        +'<span style="font-size:9px;color:var(--dim);white-space:nowrap;flex-shrink:0">'+no+'</span>'
+        +(isMgr
+          ?'<select style="flex:1;min-width:0;font-size:11px;background:var(--card);color:var(--tx);border:1px solid var(--bdr);border-radius:6px;padding:3px 5px" onchange="setSP(this)" data-spkey="'+key+'">'+selHtml(key)+'</select>'
+          :'<span style="font-size:11px">'+(sp[key]?'#'+gnn(sp[key])+' '+gnk(sp[key]):'-')+'</span>')
+        +'</div>';
+    }).join('');
+    return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:8px;padding:7px 9px">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--acc);margin-bottom:5px">'+g.icon+' '+g.label+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+cols+'</div>'
       +'</div>';
   }).join('');
-  document.getElementById('sp-sec').innerHTML='<div class="sp-t">⚽ セットプレー担当</div><div class="sp-g">'+rows+'</div>';
+  document.getElementById('sp-sec').innerHTML='<div class="sp-t">⚽ セットプレー・役割担当</div><div style="display:flex;flex-direction:column;gap:6px">'+groups+'</div>';
 }
-function setSP(type,val){if(!S.cid)return;const m=S.matches[S.cid];if(!m.setpieces)m.setpieces={};m.setpieces[type]=val?parseInt(val):null;save();}
+function setSP(sel){if(!S.cid)return;var type=sel.getAttribute('data-spkey'),val=sel.value;const m=S.matches[S.cid];if(!m.setpieces)m.setpieces={};m.setpieces[type]=val?parseInt(val):null;save();}
 
 // ══════ GOALS ══════
 function renderGoals(m){
