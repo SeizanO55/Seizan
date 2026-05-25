@@ -446,6 +446,7 @@ textarea{resize:vertical}
 <span class="h-badge" id="h-rb"></span>
 <div class="h-sp"></div>
 <button class="hb mo" id="btn-add" onclick="openMM(null)" style="display:none">＋ 試合</button>
+<button class="hb mo" id="btn-plmgr" onclick="openPlMgr()" style="display:none">👤</button>
 <button class="hb" onclick="window.print()">🖨</button>
 <button class="hb" onclick="doLogout()">← 戻る</button>
 </div>
@@ -528,6 +529,43 @@ textarea{resize:vertical}
 </div>
 
 <!-- Reset Modal -->
+
+<!-- Player Manage Modal -->
+<div class="ov" id="ov-plmgr" onclick="xov(event,'ov-plmgr')">
+<div class="mbox" style="max-width:440px">
+<div class="m-hd"><span class="m-hd-t">👤 選手管理</span><button class="mx" onclick="closeOv('ov-plmgr')">✕</button></div>
+<div class="mbody">
+<div style="background:rgba(34,160,80,.08);border:1px solid rgba(34,160,80,.25);border-radius:8px;padding:10px;margin-bottom:10px">
+<div style="font-size:11px;font-weight:700;color:var(--g2);margin-bottom:8px">➕ 新規選手追加</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">背番号</span><input type="number" id="new-num" min="1" max="99" placeholder="例: 9" style="width:72px"></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">氏名</span><input type="text" id="new-name" placeholder="例: 鈴木一郎" style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">ニック</span><input type="text" id="new-nick" placeholder="例: イチロー" style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">所属</span>
+<select id="new-lg" style="flex:1"><option value="都">都リーグ</option><option value="世">世田谷リーグ</option></select></div>
+<button onclick="addCustomPlayer()" style="background:var(--g2);color:#fff;font-weight:700;padding:9px;border-radius:8px">追加する</button>
+</div></div>
+<div style="font-size:11px;font-weight:700;color:var(--acc);margin-bottom:6px">📋 登録選手一覧（タップで編集）</div>
+<div id="plmgr-list"></div>
+</div></div></div>
+
+<!-- Player Edit Modal -->
+<div class="ov" id="ov-pledit" onclick="xov(event,'ov-pledit')">
+<div class="mbox" style="max-width:360px">
+<div class="m-hd"><span class="m-hd-t">✎ 選手編集</span><button class="mx" onclick="closeOv('ov-pledit')">✕</button></div>
+<div class="mbody" style="padding:12px">
+<input type="hidden" id="edit-orig-num">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">背番号</span><input type="number" id="edit-num" min="1" max="99" style="width:72px"></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">氏名</span><input type="text" id="edit-name" style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">ニック</span><input type="text" id="edit-nick" style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--dim);width:52px">所属</span>
+<select id="edit-lg" style="flex:1"><option value="都">都リーグ</option><option value="世">世田谷リーグ</option></select></div>
+<div style="display:flex;gap:8px;margin-top:4px">
+<button onclick="saveEditPlayer()" style="flex:1;background:var(--g2);color:#fff;font-weight:700;padding:10px;border-radius:8px">保存</button>
+<button onclick="deleteCustomPlayer()" style="background:rgba(232,64,64,.12);color:var(--out);padding:10px 14px;border:1px solid rgba(232,64,64,.3);border-radius:8px">削除</button>
+</div></div></div></div></div>
+
 <div class="ov" id="ov-rst" onclick="xov(event,'ov-rst')">
 <div class="mbox">
 <div class="m-hd"><span class="m-hd-t">🔄 リセット</span><button class="mx" onclick="closeOv('ov-rst')">✕</button></div>
@@ -861,6 +899,7 @@ function boot(){
   rb.textContent=isMgr?'監督':'閲覧'; rb.className='h-badge '+(isMgr?'mgr':'view');
   document.querySelectorAll('.mo').forEach(el=>el.style.display=isMgr?'':'none');
   document.getElementById('btn-add').style.display=isMgr?'':'none';
+  var bpm=document.getElementById('btn-plmgr');if(bpm)bpm.style.display=isMgr?'':'none';
   if(S.league==='集計'){goTab('stats');}
   else{renderTabs();renderSB();renderMC();}
   setTimeout(fixH,100);
@@ -1569,6 +1608,97 @@ let _tt=null;
 function toast(msg){
   const el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');
   clearTimeout(_tt);_tt=setTimeout(function(){el.classList.remove('on');},2200);
+}
+
+
+// ══════ PLAYER MANAGEMENT ══════
+function openPlMgr(){
+  if(S.role!=='manager')return;
+  renderPlMgrList();
+  openOv('ov-plmgr');
+}
+function renderPlMgrList(){
+  const all=getMB();
+  document.getElementById('plmgr-list').innerHTML=all.map(function(m){
+    const isCustom=(S.customMembers||[]).some(function(c){return c.num===m.num;});
+    return '<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-bottom:1px solid var(--bdr);cursor:pointer;border-radius:6px" onclick="openEditPlayer('+m.num+')">'
+      +'<span style="font-size:10px;color:var(--dim);width:24px;text-align:right">'+m.num+'</span>'
+      +'<span style="font-size:13px;font-weight:700;flex:1">'+m.nick+'</span>'
+      +'<span style="font-size:10px;color:var(--dim)">'+m.name+'</span>'
+      +'<span class="pi-lg '+m.lg+'" style="font-size:9px">'+m.lg+'</span>'
+      +(isCustom?'<span style="font-size:9px;color:var(--g2);background:rgba(34,160,80,.15);padding:1px 5px;border-radius:4px">追加</span>':'')
+      +'</div>';
+  }).join('');
+}
+function addCustomPlayer(){
+  const num=parseInt(document.getElementById('new-num').value);
+  const name=document.getElementById('new-name').value.trim();
+  const nick=document.getElementById('new-nick').value.trim();
+  const lg=document.getElementById('new-lg').value;
+  if(!num||num<1||num>99){toast('背番号を1〜99で入力してください');return;}
+  if(!name){toast('氏名を入力してください');return;}
+  if(!nick){toast('ニックネームを入力してください');return;}
+  if(getMB().some(function(m){return m.num===num;})){toast('背番号'+num+'はすでに使われています');return;}
+  if(!S.customMembers)S.customMembers=[];
+  S.customMembers.push({num:num,name:name,nick:nick,lg:lg});
+  document.getElementById('new-num').value='';
+  document.getElementById('new-name').value='';
+  document.getElementById('new-nick').value='';
+  save();renderPlMgrList();renderSB();toast(nick+' を追加しました');
+}
+var _editOrigNum=null;
+function openEditPlayer(num){
+  var m=getMB().find(function(p){return p.num===num;});
+  if(!m)return;
+  _editOrigNum=num;
+  document.getElementById('edit-orig-num').value=num;
+  document.getElementById('edit-num').value=m.num;
+  document.getElementById('edit-name').value=m.name;
+  document.getElementById('edit-nick').value=m.nick;
+  document.getElementById('edit-lg').value=m.lg;
+  openOv('ov-pledit');
+}
+function saveEditPlayer(){
+  if(_editOrigNum===null)return;
+  var newNum=parseInt(document.getElementById('edit-num').value);
+  var newName=document.getElementById('edit-name').value.trim();
+  var newNick=document.getElementById('edit-nick').value.trim();
+  var newLg=document.getElementById('edit-lg').value;
+  if(!newNum||!newName||!newNick){toast('すべての項目を入力してください');return;}
+  if(newNum!==_editOrigNum&&getMB().some(function(m){return m.num===newNum;})){toast('背番号'+newNum+'はすでに使われています');return;}
+  if(!S.customMembers)S.customMembers=[];
+  if(!S.deletedNums)S.deletedNums=[];
+  // Check if original is base member
+  var MB_BASE_nums=[2,3,4,5,6,7,8,10,11,13,17,18,20,21,22,23,24,25,26,27,28,29,30,32,33,40,43,44,45,46];
+  var isBase=MB_BASE_nums.indexOf(_editOrigNum)>=0;
+  if(isBase){
+    if(S.deletedNums.indexOf(_editOrigNum)<0)S.deletedNums.push(_editOrigNum);
+    var ci=S.customMembers.findIndex(function(c){return c.num===_editOrigNum||c.num===newNum;});
+    if(ci>=0)S.customMembers[ci]={num:newNum,name:newName,nick:newNick,lg:newLg};
+    else S.customMembers.push({num:newNum,name:newName,nick:newNick,lg:newLg});
+  } else {
+    var ci2=S.customMembers.findIndex(function(c){return c.num===_editOrigNum;});
+    if(ci2>=0)S.customMembers[ci2]={num:newNum,name:newName,nick:newNick,lg:newLg};
+  }
+  save();closeOv('ov-pledit');renderPlMgrList();renderSB();toast(newNick+' を更新しました');
+  _editOrigNum=null;
+}
+function deleteCustomPlayer(){
+  if(_editOrigNum===null)return;
+  var m=getMB().find(function(p){return p.num===_editOrigNum;});
+  if(!m)return;
+  if(!confirm('"'+m.nick+'" を削除しますか？'))return;
+  if(!S.customMembers)S.customMembers=[];
+  if(!S.deletedNums)S.deletedNums=[];
+  var MB_BASE_nums=[2,3,4,5,6,7,8,10,11,13,17,18,20,21,22,23,24,25,26,27,28,29,30,32,33,40,43,44,45,46];
+  if(MB_BASE_nums.indexOf(_editOrigNum)>=0){
+    if(S.deletedNums.indexOf(_editOrigNum)<0)S.deletedNums.push(_editOrigNum);
+  } else {
+    S.customMembers=S.customMembers.filter(function(c){return c.num!==_editOrigNum;});
+  }
+  delete S.present[_editOrigNum];
+  save();closeOv('ov-pledit');renderPlMgrList();renderSB();toast(m.nick+' を削除しました');
+  _editOrigNum=null;
 }
 
 // ══════ HEIGHT FIX ══════
