@@ -922,16 +922,56 @@ function toggleSB(){
 function setSF(f,el){S.sf=f;document.querySelectorAll('.sf').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderSB();}
 function renderSB(){
   const isMgr=S.role==='manager';
-  const pts=calcPts();
-  const mems=sbMems();let cnt=0;
-  document.getElementById('pl-list').innerHTML=mems.map(function(m){
-    const p=!!S.present[m.num];if(p)cnt++;
-    const tot=pts[m.num]?pts[m.num].total:0;
+
+  // 現在選択中の試合のみの出場ポイントを計算
+  function calcMatchPts(){
+    const p={};
+    getMB().forEach(function(m){p[m.num]=0;});
+    if(!S.cid||!S.matches[S.cid])return p;
+    const m=S.matches[S.cid];
+    QS.forEach(function(q){
+      const pos=(m[q]&&m[q].positions)||{};
+      const gkN=pos.gk||null;
+      Object.values(pos).filter(Boolean).forEach(function(n){
+        if(!p[n]&&p[n]!==0)p[n]=0;
+        if(n!==gkN)p[n]=(p[n]||0)+1; // フィールドのみカウント
+      });
+    });
+    return p;
+  }
+
+  const pts=calcMatchPts();
+  const mems=sbMems();
+  let cnt=0;
+
+  // 出席者と欠席者に分ける
+  const present=[], absent=[];
+  mems.forEach(function(m){
+    if(S.present[m.num]){cnt++;present.push(m);}
+    else absent.push(m);
+  });
+
+  // 出席者は出場ポイントの低い順（昇順）に並び替え
+  present.sort(function(a,b){
+    const pa=pts[a.num]||0, pb=pts[b.num]||0;
+    return pa-pb || a.num-b.num;
+  });
+
+  // 欠席者は背番号順
+  absent.sort(function(a,b){return a.num-b.num;});
+
+  // 出席者を上位に、欠席者を下位に
+  const sorted=[...present,...absent];
+
+  document.getElementById('pl-list').innerHTML=sorted.map(function(m){
+    const p=!!S.present[m.num];
+    const tot=pts[m.num]||0;
     return '<div class="pi '+(p?'pres':'abs')+'" data-n="'+m.num+'" draggable="'+isMgr+'" ondragstart="ds(event,'+m.num+')" ontouchstart="ts(event,'+m.num+')" ontouchmove="tm(event)" ontouchend="te(event)">'
       +(isMgr?'<input type="checkbox" '+(p?'checked':'')+' onchange="togP('+m.num+',this.checked)" onclick="event.stopPropagation()">':'')
       +'<span class="pi-n">'+m.num+'</span>'
       +'<span class="pi-k">'+m.nick+'</span>'
-      +(tot>0?'<span class="pi-p">'+tot+'</span>':'')
+      +(p&&tot>0?'<span class="pi-p">'+tot+'</span>':'')
+      +(p&&tot===0?'<span class="pi-p" style="background:rgba(48,208,128,.1);color:#88dda8">0</span>':'')
       +'<span class="pi-lg '+m.lg+'">'+m.lg+'</span>'
       +'</div>';
   }).join('');
