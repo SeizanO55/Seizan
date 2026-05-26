@@ -899,7 +899,10 @@ function showS(id){
 function doLogout(){S.league=null;S.role=null;document.getElementById('app').classList.remove('on');showS('s-lg');}
 function goLg(lg){S.league=lg;if(lg==='集計'){goRole('view');return;}document.getElementById('s-rl').querySelector('.l-logo').textContent='SZK';showS('s-rl');}
 function goRole(r){
-  S.role=r; showS(null); load(); boot();
+  S.role=r;
+  // リーグ切り替え時にS.matchesをリセット（前のリーグのデータが混入しないよう）
+  S.matches={}; S.nid=1; S.cid=null; S.present={};
+  showS(null); load(); boot();
   // Firebase subscribe
   function sub(){
     if(!window.__remoteSubscribe){window.__fbQ=sub;return;}
@@ -915,23 +918,7 @@ function goRole(r){
           S.deletedNums=d.deletedNums||[];
           var rm=d.matches||{};
           _deletedIds.forEach(function(id){delete rm[id];});
-          // リモートを完全優先、コメント入力中のもののみローカルを保持
-          var merged={};
-          Object.keys(rm).forEach(function(id){
-            var remote=rm[id];
-            var local=S.matches[id];
-            merged[id]=JSON.parse(JSON.stringify(remote));
-            if(local&&local.comments){
-              var mc=local.comments,rc=remote.comments||{};
-              merged[id].comments={
-                pre:   (mc.pre   ?mc.pre   :rc.pre   ||''),
-                first: (mc.first ?mc.first :rc.first ||''),
-                second:(mc.second?mc.second:rc.second||''),
-                post:  (mc.post  ?mc.post  :rc.post  ||'')
-              };
-            }
-          });
-          S.matches=merged;
+          S.matches=JSON.parse(JSON.stringify(rm));
           if(!S.cid||!S.matches[S.cid]){var k=sortedIds();S.cid=k.length?k[0]:null;}
         }
         if(S.tab==='stats')renderStats();
