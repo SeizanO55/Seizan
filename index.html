@@ -148,8 +148,8 @@ textarea{resize:vertical}
 .sb-tools{padding:4px;flex-shrink:0;border-bottom:1px solid var(--bdr);display:flex;flex-direction:column;gap:2px}
 .sbt{background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);
   font-size:9px;padding:4px 6px;text-align:left;border-radius:4px}
-.pl-list{flex:1;overflow-y:auto;overflow-x:hidden;padding:3px;
-  -webkit-overflow-scrolling:touch}
+.pl-list{flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;padding:3px;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 .pi{display:flex;align-items:center;gap:3px;padding:4px;border-radius:5px;
   margin-bottom:2px;cursor:grab;background:rgba(255,255,255,.02)}
 .pi.pres{background:rgba(12,72,36,.38);border:1px solid rgba(34,160,80,.22)}
@@ -230,10 +230,10 @@ textarea{resize:vertical}
 .tok.chg .pdot{background:rgba(100,20,20,.85);border-color:#ff5060}
 .tok.gk .pdot{background:rgba(65,30,0,.7);border-color:#f08020}
 .tok.gk.fil .pdot{background:rgba(130,60,0,.85);border-color:rgba(255,160,50,.9)}
-.p-lb{font-size:8px;color:rgba(255,255,255,.55);line-height:1}
-.p-nm{font-size:9px;font-weight:700;color:#fff;max-width:32px;
+.p-lb{font-size:9px;color:rgba(255,255,255,.55);line-height:1}
+.p-nm{font-size:11px;font-weight:700;color:#fff;max-width:32px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;text-align:center}
-.p-nb{font-size:8px;color:rgba(255,255,255,.7);line-height:1}
+.p-nb{font-size:10px;color:rgba(255,255,255,.85);line-height:1;font-weight:700}
 @media(min-width:900px){
   .pitch{max-width:340px}
   .pdot{width:64px;height:64px}
@@ -538,6 +538,26 @@ textarea{resize:vertical}
 <div><div class="mm-l">試合日</div><input type="date" id="mm-dt" style="width:100%"></div>
 <div><div class="mm-l">対戦相手</div><input type="text" id="mm-op" placeholder="例：FC渋谷" style="width:100%"></div>
 <div><div class="mm-l">会場（任意）</div><input type="text" id="mm-vn" style="width:100%"></div>
+<div style="display:flex;gap:8px">
+<div style="flex:1"><div class="mm-l">集合時間</div><input type="time" id="mm-gt" style="width:100%"></div>
+<div style="flex:1"><div class="mm-l">KO時間</div><input type="time" id="mm-ko" style="width:100%"></div>
+</div>
+<div>
+<div class="mm-l">ユニフォーム FP</div>
+<select id="mm-fp" style="width:100%">
+<option value="">未定</option>
+<option value="青">🔵 青</option>
+<option value="白">⚪ 白</option>
+</select>
+</div>
+<div>
+<div class="mm-l">ユニフォーム GK</div>
+<select id="mm-gk" style="width:100%">
+<option value="">未定</option>
+<option value="グレー">⬜ グレー</option>
+<option value="黄色">🟡 黄色</option>
+</select>
+</div>
 <div><div class="mm-l">リーグ</div>
 <select id="mm-lg" style="width:100%">
 <option value="都リーグ">🏟️ 都リーグ</option>
@@ -1124,8 +1144,12 @@ function renderInfo(m){
   const isMgr=S.role==='manager';
   const tl=m.matchType==='practice'?'練習試合':'公式戦';
   const tc=m.matchType==='practice'?'prc':'off';
+  const fpColor=m.uniformFP==='青'?'#4aa8e8':m.uniformFP==='白'?'#ddeaf8':'var(--dim)';
+  const gkColor=m.uniformGK==='黄色'?'#f0c040':m.uniformGK==='グレー'?'#aaa':'var(--dim)';
   document.getElementById('m-info').innerHTML=
-    '<span class="mi-d">'+(m.date?fmtD(m.date):'日程未定')+'</span>'
+    '<div style="width:100%;display:flex;flex-direction:column;gap:5px">'
+    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+    +'<span class="mi-d">'+(m.date?fmtD(m.date):'日程未定')+'</span>'
     +'<span style="color:var(--dim);font-weight:700">vs</span>'
     +'<span class="mi-v">'+(m.opponent||'?')+'</span>'
     +(m.venue?'<span style="font-size:10px;color:var(--dim)">📍'+m.venue+'</span>':'')
@@ -1133,7 +1157,15 @@ function renderInfo(m){
     +(m.league?'<span style="font-size:10px;color:var(--dim)">'+m.league+'</span>':'')
     +'<div style="flex:1"></div>'
     +(isMgr?'<button class="hb" onclick="openMM(\'edit\')" style="font-size:10px;padding:4px 8px">✎ 編集</button>'
-            +'<button class="hb" onclick="openOv(\'ov-rst\')" style="font-size:10px;padding:4px 8px">🔄</button>':'');
+           +'<button class="hb" onclick="openOv(\'ov-rst\')" style="font-size:10px;padding:4px 8px">🔄</button>':'')
+    +'</div>'
+    +'<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px">'
+    +(m.gatherTime?'<span style="color:var(--dim)">🕐 集合 <b style="color:var(--tx)">'+m.gatherTime+'</b></span>':'')
+    +(m.kickoff?'<span style="color:var(--dim)">⚽ KO <b style="color:var(--acc)">'+m.kickoff+'</b></span>':'')
+    +(m.uniformFP?'<span style="color:var(--dim)">👕 FP <b style="color:'+fpColor+'">'+m.uniformFP+'</b></span>':'')
+    +(m.uniformGK?'<span style="color:var(--dim)">🧤 GK <b style="color:'+gkColor+'">'+m.uniformGK+'</b></span>':'')
+    +'</div>'
+    +'</div>';
 }
 
 // ══════ HALVES ══════
@@ -1644,12 +1676,20 @@ function openMM(mode){
     document.getElementById('mm-dt').value=m.date||'';
     document.getElementById('mm-op').value=m.opponent||'';
     document.getElementById('mm-vn').value=m.venue||'';
+    document.getElementById('mm-gt').value=m.gatherTime||'';
+    document.getElementById('mm-ko').value=m.kickoff||'';
+    document.getElementById('mm-fp').value=m.uniformFP||'';
+    document.getElementById('mm-gk').value=m.uniformGK||'';
     document.getElementById('mm-lg').value=m.league||'都リーグ';
     document.getElementById('mm-tp').value=m.matchType||'official';
   }else{
     document.getElementById('mm-dt').value=new Date().toISOString().split('T')[0];
     document.getElementById('mm-op').value='';
     document.getElementById('mm-vn').value='';
+    document.getElementById('mm-gt').value='';
+    document.getElementById('mm-ko').value='';
+    document.getElementById('mm-fp').value='';
+    document.getElementById('mm-gk').value='';
     document.getElementById('mm-lg').value=S.league==='世田谷リーグ'?'世田谷リーグ':'都リーグ';
     document.getElementById('mm-tp').value='official';
   }
@@ -1662,15 +1702,19 @@ function saveMatch(){
   const date=document.getElementById('mm-dt').value;
   const opp=document.getElementById('mm-op').value.trim();
   const ven=document.getElementById('mm-vn').value.trim();
+  const gt=document.getElementById('mm-gt').value;
+  const ko=document.getElementById('mm-ko').value;
+  const fp=document.getElementById('mm-fp').value;
+  const gkunif=document.getElementById('mm-gk').value;
   const lg=document.getElementById('mm-lg').value;
   const tp=document.getElementById('mm-tp').value;
   if(!opp){toast('対戦相手を入力してください');return;}
   function qe(){return{formation:DF,positions:{}};}
   if(_eid){
-    Object.assign(S.matches[_eid],{date:date,opponent:opp,venue:ven,league:lg,matchType:tp});
+    Object.assign(S.matches[_eid],{date:date,opponent:opp,venue:ven,gatherTime:gt,kickoff:ko,uniformFP:fp,uniformGK:gkunif,league:lg,matchType:tp});
   }else{
     const id='m'+S.nid++;
-    S.matches[id]={id:id,date:date,opponent:opp,venue:ven,league:lg,matchType:tp,
+    S.matches[id]={id:id,date:date,opponent:opp,venue:ven,gatherTime:gt,kickoff:ko,uniformFP:fp,uniformGK:gkunif,league:lg,matchType:tp,
       q1:qe(),q2:qe(),q3:qe(),q4:qe(),
       score:{own:[0,0,0,0],opp:[0,0,0,0]},goals:[],setpieces:{},
       comments:{pre:'',first:'',second:'',post:''}};
