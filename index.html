@@ -579,6 +579,13 @@ textarea{resize:vertical}
 </div>
 </div>
 </div>
+<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:8px;padding:8px 10px">
+<div style="font-size:11px;font-weight:700;color:var(--acc);margin-bottom:6px">⭐ MOM（最優秀選手）</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap" id="mm-mom-wrap">
+<select id="mm-mom1" style="flex:1;min-width:100px;font-size:12px;background:var(--card);color:var(--tx);border:1px solid var(--bdr);border-radius:6px;padding:4px 6px"><option value="">未選定</option></select>
+<select id="mm-mom2" style="flex:1;min-width:100px;font-size:12px;background:var(--card);color:var(--tx);border:1px solid var(--bdr);border-radius:6px;padding:4px 6px"><option value="">（2人目）</option></select>
+</div>
+</div>
 <div><div class="mm-l">リーグ</div>
 <select id="mm-lg" style="width:100%">
 <option value="都リーグ">🏟️ 都リーグ</option>
@@ -663,27 +670,27 @@ const HIST_ALL = [
   {id:'hist_20250511_5',date:'2025-05-11',opponent:'玉川FC50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[0,0,0,0],opp:[3,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
   {id:'hist_20250525_6',date:'2025-05-25',opponent:'FC本郷50',venue:'森ケ崎G',matchType:'official',league:'都リーグ',score:{own:[1,0,0,0],opp:[1,0,0,0]},goals:[{scorer:11,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
   {id:'hist_20250607_7',date:'2025-06-07',opponent:'ParqueNogue',venue:'多摩川緑地B',matchType:'practice',league:'練習試合',score:{own:[2,0,0,0],opp:[2,0,0,0]},goals:[{scorer:44,assist:null,q:'q1'},{scorer:5,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20250614_8',date:'2025-06-14',opponent:'府中アスレエクレウス',venue:'府中の森',matchType:'practice',league:'練習試合',score:{own:[2,0,0,0],opp:[2,0,0,0]},goals:[{scorer:44,assist:13,q:'q1'},{scorer:11,assist:27,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20250622_9',date:'2025-06-22',opponent:'FCかすみ',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[1,0,0,0],opp:[0,0,0,0]},goals:[{scorer:44,assist:17,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20250705_10',date:'2025-07-05',opponent:'希望ヶ丘バレッツ',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20250713_11',date:'2025-07-13',opponent:'エルスール50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[2,0,0,0],opp:[0,0,0,0]},goals:[{scorer:36,assist:17,q:'q1'},{scorer:22,assist:44,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
+  {id:'hist_20250614_8',date:'2025-06-14',opponent:'府中アスレエクレウス',venue:'府中の森',matchType:'practice',league:'練習試合',score:{own:[2,0,0,0],opp:[2,0,0,0]},goals:[{scorer:44,assist:13,q:'q1'},{scorer:11,assist:27,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[25]},
+  {id:'hist_20250622_9',date:'2025-06-22',opponent:'FCかすみ',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[1,0,0,0],opp:[0,0,0,0]},goals:[{scorer:44,assist:17,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[24]},
+  {id:'hist_20250705_10',date:'2025-07-05',opponent:'希望ヶ丘バレッツ',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[36]},
+  {id:'hist_20250713_11',date:'2025-07-13',opponent:'エルスール50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[2,0,0,0],opp:[0,0,0,0]},goals:[{scorer:36,assist:17,q:'q1'},{scorer:22,assist:44,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[24]},
   {id:'hist_20250823_12',date:'2025-08-23',opponent:'FFC',venue:'二子玉川G',matchType:'practice',league:'練習試合',score:{own:[3,0,0,0],opp:[5,0,0,0]},goals:[{scorer:44,assist:null,q:'q1'},{scorer:21,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
   {id:'hist_20250824_13',date:'2025-08-24',opponent:'WAS40・Quattro',venue:'二子玉川G',matchType:'practice',league:'練習試合',score:{own:[2,0,0,0],opp:[4,0,0,0]},goals:[{scorer:44,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
   {id:'hist_20250906_14',date:'2025-09-06',opponent:'府中アスレエクレウス',venue:'日の出町谷戸沢G',matchType:'official',league:'都リーグ',score:{own:[2,0,0,0],opp:[1,0,0,0]},goals:[{scorer:17,assist:22,q:'q1'},{scorer:11,assist:44,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20250914_15',date:'2025-09-14',opponent:'ベリーニ55',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[2,0,0,0],opp:[1,0,0,0]},goals:[{scorer:46,assist:11,q:'q1'},{scorer:22,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20250927_16',date:'2025-09-27',opponent:'ParqueNogue',venue:'世田谷公園',matchType:'official',league:'世田谷リーグ',score:{own:[0,0,0,0],opp:[0,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20251018_17',date:'2025-10-18',opponent:'荒川シニア50',venue:'日の出町谷戸沢G',matchType:'official',league:'都リーグ',score:{own:[2,0,0,0],opp:[1,0,0,0]},goals:[{scorer:46,assist:11,q:'q1'},{scorer:22,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20251108_18',date:'2025-11-08',opponent:'Reborn',venue:'にいじゅくみらい',matchType:'official',league:'都リーグ',score:{own:[1,0,0,0],opp:[1,0,0,0]},goals:[{scorer:7,assist:46,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20251116_19',date:'2025-11-16',opponent:'OPB50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[1,0,0,0],opp:[0,0,0,0]},goals:[{scorer:5,assist:45,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20251124_20',date:'2025-11-24',opponent:'LANZA',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20251129_21',date:'2025-11-29',opponent:'レアルコスモス50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[5,0,0,0],opp:[0,0,0,0]},goals:[{scorer:27,assist:22,q:'q1'},{scorer:7,assist:27,q:'q1'},{scorer:21,assist:27,q:'q1'},{scorer:36,assist:22,q:'q1'},{scorer:21,assist:36,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20260211_22',date:'2026-02-11',opponent:'TDF',venue:'文化学園八王子G',matchType:'practice',league:'練習試合',score:{own:[2,0,0,0],opp:[3,0,0,0]},goals:[{scorer:8,assist:22,q:'q1'},{scorer:7,assist:46,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'キリン1':11},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20260320_23',date:'2026-03-20',opponent:'多摩川FC',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[2,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':28,'BP1':5,'BP2':20,'キリン1':21},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20260328_24',date:'2026-03-28',opponent:'ブレインズ50',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':20,'審判2':22,'BP1':11,'BP2':33,'BP3':21,'BP4':2,'キリン1':21},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20260411_25',date:'2026-04-11',opponent:'TokyoCROW50',venue:'大泉さくらG',matchType:'official',league:'都リーグ',score:{own:[4,0,0,0],opp:[1,0,0,0]},goals:[{scorer:11,assist:7,q:'q1'},{scorer:7,assist:40,q:'q1'},{scorer:11,assist:7,q:'q1'},{scorer:7,assist:36,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':11,'キリン1':21},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20260418_26',date:'2026-04-18',opponent:'Cerejeiro',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':21,'審判2':28,'BP1':11,'BP2':33,'キリン1':21},comments:{pre:'',first:'',second:'',post:''}},
+  {id:'hist_20250914_15',date:'2025-09-14',opponent:'ベリーニ55',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[2,0,0,0],opp:[1,0,0,0]},goals:[{scorer:46,assist:11,q:'q1'},{scorer:22,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[36,11]},
+  {id:'hist_20250927_16',date:'2025-09-27',opponent:'ParqueNogue',venue:'世田谷公園',matchType:'official',league:'世田谷リーグ',score:{own:[0,0,0,0],opp:[0,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[36]},
+  {id:'hist_20251018_17',date:'2025-10-18',opponent:'荒川シニア50',venue:'日の出町谷戸沢G',matchType:'official',league:'都リーグ',score:{own:[2,0,0,0],opp:[1,0,0,0]},goals:[{scorer:46,assist:11,q:'q1'},{scorer:22,assist:null,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[11]},
+  {id:'hist_20251108_18',date:'2025-11-08',opponent:'Reborn',venue:'にいじゅくみらい',matchType:'official',league:'都リーグ',score:{own:[1,0,0,0],opp:[1,0,0,0]},goals:[{scorer:7,assist:46,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[3,11]},
+  {id:'hist_20251116_19',date:'2025-11-16',opponent:'OPB50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[1,0,0,0],opp:[0,0,0,0]},goals:[{scorer:5,assist:45,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[4]},
+  {id:'hist_20251124_20',date:'2025-11-24',opponent:'LANZA',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[45]},
+  {id:'hist_20251129_21',date:'2025-11-29',opponent:'レアルコスモス50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[5,0,0,0],opp:[0,0,0,0]},goals:[{scorer:27,assist:22,q:'q1'},{scorer:7,assist:27,q:'q1'},{scorer:21,assist:27,q:'q1'},{scorer:36,assist:22,q:'q1'},{scorer:21,assist:36,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[27]},
+  {id:'hist_20260211_22',date:'2026-02-11',opponent:'TDF',venue:'文化学園八王子G',matchType:'practice',league:'練習試合',score:{own:[2,0,0,0],opp:[3,0,0,0]},goals:[{scorer:8,assist:22,q:'q1'},{scorer:7,assist:46,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'キリン1':11},comments:{pre:'',first:'',second:'',post:''},mom:[29]},
+  {id:'hist_20260320_23',date:'2026-03-20',opponent:'多摩川FC',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[2,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':28,'BP1':5,'BP2':20,'キリン1':21},comments:{pre:'',first:'',second:'',post:''},mom:[25]},
+  {id:'hist_20260328_24',date:'2026-03-28',opponent:'ブレインズ50',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':20,'審判2':22,'BP1':11,'BP2':33,'BP3':21,'BP4':2,'キリン1':21},comments:{pre:'',first:'',second:'',post:''},mom:[7]},
+  {id:'hist_20260411_25',date:'2026-04-11',opponent:'TokyoCROW50',venue:'大泉さくらG',matchType:'official',league:'都リーグ',score:{own:[4,0,0,0],opp:[1,0,0,0]},goals:[{scorer:11,assist:7,q:'q1'},{scorer:7,assist:40,q:'q1'},{scorer:11,assist:7,q:'q1'},{scorer:7,assist:36,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':11,'キリン1':21},comments:{pre:'',first:'',second:'',post:''},mom:[7,11]},
+  {id:'hist_20260418_26',date:'2026-04-18',opponent:'Cerejeiro',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[1,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{'審判1':21,'審判2':28,'BP1':11,'BP2':33,'キリン1':21},comments:{pre:'',first:'',second:'',post:''},mom:[29]},
   {id:'hist_20260429_27',date:'2026-04-29',opponent:'成城FC50',venue:'二子玉川G',matchType:'official',league:'世田谷リーグ',score:{own:[2,0,0,0],opp:[1,0,0,0]},goals:[{scorer:11,assist:22,q:'q1'},{scorer:27,assist:22,q:'q1'}],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
-  {id:'hist_20260502_28',date:'2026-05-02',opponent:'EARLYBIRD50',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[4,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''}},
+  {id:'hist_20260502_28',date:'2026-05-02',opponent:'EARLYBIRD50',venue:'練馬総合',matchType:'official',league:'都リーグ',score:{own:[0,0,0,0],opp:[4,0,0,0]},goals:[],q1:{formation:'4-4-2',positions:{}},q2:{formation:'4-4-2',positions:{}},q3:{formation:'4-4-2',positions:{}},q4:{formation:'4-4-2',positions:{}},setpieces:{},comments:{pre:'',first:'',second:'',post:''},mom:[33]},
 ];
 
 const FORMS={
@@ -1186,6 +1193,7 @@ function renderInfo(m){
     +(m.uniformFP?'<span style="color:var(--dim)">👕 FP <b style="color:'+fpColor+'">'+m.uniformFP+'</b></span>':'')
     +(m.uniformGK?'<span style="color:var(--dim)">🧤 GK <b style="color:'+gkColor+'">'+m.uniformGK+'</b></span>':'')
     +'</div>'
+    +((m.mom&&m.mom.length)?'<div style="display:flex;gap:8px;align-items:center;font-size:11px;background:rgba(255,192,64,.1);border:1px solid rgba(255,192,64,.3);border-radius:6px;padding:5px 8px"><span style="font-size:13px">⭐</span><span style="font-weight:700;color:var(--acc)">MOM</span>'+m.mom.map(function(n){return '<span style="color:var(--tx);font-weight:700">#'+n+' '+gnk(n)+'</span>';}).join('<span style="color:var(--dim)">・</span>')+'</div>':'')
     +((m.refPP||m.refP||m.refN||m.refNN)?
       '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;background:rgba(255,192,64,.06);border:1px solid rgba(255,192,64,.15);border-radius:6px;padding:5px 8px">'
       +'<span style="font-size:10px;font-weight:700;color:var(--acc)">🟨 隣接審判</span>'
@@ -1522,7 +1530,7 @@ function renderStats(){
   // aggregate
   var wins=0,draws=0,losses=0,gf=0,ga=0;
   const pS={},oppS={};
-  getMB().forEach(function(m){pS[m.num]={goals:0,assists:0,pts:0,gkPts:0,played:0,referee:0,bp:0,kirin:0};});
+  getMB().forEach(function(m){pS[m.num]={goals:0,assists:0,pts:0,gkPts:0,played:0,referee:0,bp:0,kirin:0,mom:0};});
   filtered.forEach(function(m){
     const f=(m.score&&m.score.own||[0,0,0,0]).reduce(function(a,b){return a+b;},0);
     const a=(m.score&&m.score.opp||[0,0,0,0]).reduce(function(a,b){return a+b;},0);
@@ -1536,7 +1544,8 @@ function renderStats(){
     var sp=m.setpieces||{};
     ['審判1','審判2'].forEach(function(k){if(sp[k]){if(!pS[sp[k]])pS[sp[k]]={goals:0,assists:0,pts:0,gkPts:0,played:0,referee:0,bp:0,kirin:0};pS[sp[k]].referee++;}});
     ['BP1','BP2','BP3','BP4'].forEach(function(k){if(sp[k]){if(!pS[sp[k]])pS[sp[k]]={goals:0,assists:0,pts:0,gkPts:0,played:0,referee:0,bp:0,kirin:0};pS[sp[k]].bp++;}});
-    ['キリン1','キリン2'].forEach(function(k){if(sp[k]){if(!pS[sp[k]])pS[sp[k]]={goals:0,assists:0,pts:0,gkPts:0,played:0,referee:0,bp:0,kirin:0};pS[sp[k]].kirin++;}});
+    ['キリン1','キリン2'].forEach(function(k){if(sp[k]){if(!pS[sp[k]])pS[sp[k]]={goals:0,assists:0,pts:0,gkPts:0,played:0,referee:0,bp:0,kirin:0,mom:0};pS[sp[k]].kirin++;}});
+    (m.mom||[]).forEach(function(n){if(n){if(!pS[n])pS[n]={goals:0,assists:0,pts:0,gkPts:0,played:0,referee:0,bp:0,kirin:0,mom:0};pS[n].mom++;}});
     const opp=m.opponent||'不明';
     if(!oppS[opp])oppS[opp]={w:0,d:0,l:0,gf:0,ga:0};
     oppS[opp].gf+=f;oppS[opp].ga+=a;
@@ -1646,6 +1655,7 @@ function renderStats(){
      +'<div style="'+SEC+';flex:1;min-width:180px"><div class="sv-t">⚽ BP担当</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+'">#</th><th style="'+TH+';text-align:left">選手</th><th style="'+TH+'">回数</th></tr></thead><tbody>'+makeRank('bp','#88ddaa','📌')+'</tbody></table></div></div>'
    +'</div>'
    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+     +'<div style="'+SEC+';flex:1;min-width:180px"><div class="sv-t">⭐ MOMランキング</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+'">#</th><th style="'+TH+';text-align:left">選手</th><th style="'+TH+'">回数</th></tr></thead><tbody>'+makeRank('mom','#f0c040','⭐')+'</tbody></table></div></div>'
      +'<div style="'+SEC+';flex:1;min-width:180px"><div class="sv-t">🦒 キリン担当</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+'">#</th><th style="'+TH+';text-align:left">選手</th><th style="'+TH+'">回数</th></tr></thead><tbody>'+makeRank('kirin','#f4d03f','🦒')+'</tbody></table></div></div>'
    +'</div>'
    +'<div style="'+SEC+'"><div class="sv-t">選手別成績</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+';text-align:left">選手</th><th style="'+TH+'">出場</th><th style="'+TH+'">FLD</th><th style="'+TH+'">GK</th><th style="'+TH+'">得点</th><th style="'+TH+'">A</th></tr></thead><tbody>'+plRows+'</tbody></table></div></div>'
@@ -1733,6 +1743,19 @@ function openMM(mode){
   document.getElementById('mm-lg').onchange=function(){
     document.getElementById('mm-tp').value=this.value==='練習試合'?'practice':'official';
   };
+  // MOM選択肢を全メンバーで構成
+  var momOpts='<option value="">未選定</option>'+getMB().map(function(p){return '<option value="'+p.num+'">'+p.num+' '+p.nick+'</option>';}).join('');
+  var momOpts2='<option value="">（2人目）</option>'+getMB().map(function(p){return '<option value="'+p.num+'">'+p.num+' '+p.nick+'</option>';}).join('');
+  document.getElementById('mm-mom1').innerHTML=momOpts;
+  document.getElementById('mm-mom2').innerHTML=momOpts2;
+  if(isE){
+    var moms=(S.matches[_eid]&&S.matches[_eid].mom)||[];
+    document.getElementById('mm-mom1').value=moms[0]||'';
+    document.getElementById('mm-mom2').value=moms[1]||'';
+  } else {
+    document.getElementById('mm-mom1').value='';
+    document.getElementById('mm-mom2').value='';
+  }
   openOv('ov-mm');
 }
 function saveMatch(){
@@ -1747,15 +1770,20 @@ function saveMatch(){
   const refP=document.getElementById('mm-ref-p').value.trim();
   const refN=document.getElementById('mm-ref-n').value.trim();
   const refNN=document.getElementById('mm-ref-nn').value.trim();
+  var momArr=[];
+  var m1v=parseInt(document.getElementById('mm-mom1').value)||null;
+  var m2v=parseInt(document.getElementById('mm-mom2').value)||null;
+  if(m1v)momArr.push(m1v);
+  if(m2v&&m2v!==m1v)momArr.push(m2v);
   const lg=document.getElementById('mm-lg').value;
   const tp=document.getElementById('mm-tp').value;
   if(!opp){toast('対戦相手を入力してください');return;}
   function qe(){return{formation:DF,positions:{}};}
   if(_eid){
-    Object.assign(S.matches[_eid],{date:date,opponent:opp,venue:ven,gatherTime:gt,kickoff:ko,uniformFP:fp,uniformGK:gkunif,refPP:refPP,refP:refP,refN:refN,refNN:refNN,league:lg,matchType:tp});
+    Object.assign(S.matches[_eid],{date:date,opponent:opp,venue:ven,gatherTime:gt,kickoff:ko,uniformFP:fp,uniformGK:gkunif,refPP:refPP,refP:refP,refN:refN,refNN:refNN,mom:momArr,league:lg,matchType:tp});
   }else{
     const id='m'+S.nid++;
-    S.matches[id]={id:id,date:date,opponent:opp,venue:ven,gatherTime:gt,kickoff:ko,uniformFP:fp,uniformGK:gkunif,refPP:refPP,refP:refP,refN:refN,refNN:refNN,league:lg,matchType:tp,
+    S.matches[id]={id:id,date:date,opponent:opp,venue:ven,gatherTime:gt,kickoff:ko,uniformFP:fp,uniformGK:gkunif,refPP:refPP,refP:refP,refN:refN,refNN:refNN,mom:momArr,league:lg,matchType:tp,
       q1:qe(),q2:qe(),q3:qe(),q4:qe(),
       score:{own:[0,0,0,0],opp:[0,0,0,0]},goals:[],setpieces:{},
       comments:{pre:'',first:'',second:'',post:''}};
