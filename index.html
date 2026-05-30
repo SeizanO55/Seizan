@@ -1625,6 +1625,7 @@ function renderStats(){
     const lgc=m.league==='都リーグ'?'rgba(74,168,232,.3)':m.league==='世田谷リーグ'?'rgba(155,89,182,.3)':'rgba(255,255,255,.08)';
     const lgt=m.league==='都リーグ'?'#7ac0f0':m.league==='世田谷リーグ'?'#c090e0':'#aaa';
     const st=(m.goals||[]).filter(function(g){return g.scorer;}).map(function(g){return g.assist?gnk(g.scorer)+'('+gnk(g.assist)+')':gnk(g.scorer);}).join('、');
+    const momTxt=(m.mom&&m.mom.length)?(m.mom.map(function(n){return gnk(n);}).join('・')):'–';
     const ds=m.date?m.date.replace(/(\d{4})-(\d{2})-(\d{2})/,'$2/$3'):'';
     return '<tr>'
       +'<td style="white-space:nowrap;font-size:11px;padding:3px 6px">'+ds+'</td>'
@@ -1633,8 +1634,10 @@ function renderStats(){
       +'<td style="font-size:11px;color:#5a7890;padding:3px 6px">'+(m.venue||'')+'</td>'
       +'<td style="font-weight:800;color:'+rc+';text-align:center;padding:3px 6px">'+res+'</td>'
       +'<td style="text-align:center;white-space:nowrap;padding:3px 6px;font-weight:700"><span style="color:#30d080">'+f+'</span><span style="color:#5a7890"> - </span><span style="color:#ff5060">'+a+'</span></td>'
-      +'<td style="font-size:11px;padding:3px 6px">'+(st||'–')+'</td></tr>';
-  }).join('')||'<tr><td colspan="7" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
+      +'<td style="font-size:11px;padding:3px 6px">'+(st||'–')+'</td>'
+      +'<td style="font-size:11px;padding:3px 6px;color:'+(m.mom&&m.mom.length?'#f0c040':'#5a7890')+'">'+momTxt+'</td>'
+      +'</tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:#5a7890;padding:12px">データなし</td></tr>';
 
   const T='width:100%;border-collapse:collapse;font-size:12px';
   sv.innerHTML=
@@ -1660,7 +1663,7 @@ function renderStats(){
    +'</div>'
    +'<div style="'+SEC+'"><div class="sv-t">選手別成績</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+';text-align:left">選手</th><th style="'+TH+'">出場</th><th style="'+TH+'">FLD</th><th style="'+TH+'">GK</th><th style="'+TH+'">得点</th><th style="'+TH+'">A</th></tr></thead><tbody>'+plRows+'</tbody></table></div></div>'
    +'<div style="'+SEC+'"><div class="sv-t">対戦成績</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+';text-align:left">相手</th><th style="'+TH+'">試</th><th style="'+TH+'">勝</th><th style="'+TH+'">分</th><th style="'+TH+'">負</th><th style="'+TH+'">得</th><th style="'+TH+'">失</th><th style="'+TH+'">差</th></tr></thead><tbody>'+oppRows+'</tbody></table></div></div>'
-   +'<div style="'+SEC+'"><div class="sv-t">試合一覧</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+';text-align:left">日付</th><th style="'+TH+'">区</th><th style="'+TH+';text-align:left">相手</th><th style="'+TH+';text-align:left">会場</th><th style="'+TH+'">結果</th><th style="'+TH+'">スコア</th><th style="'+TH+';text-align:left">得点者(A)</th></tr></thead><tbody>'+mRows+'</tbody></table></div></div>';
+   +'<div style="'+SEC+'"><div class="sv-t">試合一覧</div><div style="overflow-x:auto"><table style="'+T+'"><thead><tr><th style="'+TH+';text-align:left">日付</th><th style="'+TH+'">区</th><th style="'+TH+';text-align:left">相手</th><th style="'+TH+';text-align:left">会場</th><th style="'+TH+'">結果</th><th style="'+TH+'">スコア</th><th style="'+TH+';text-align:left">得点者(A)</th><th style="'+TH+';text-align:left">⭐MOM</th></tr></thead><tbody>'+mRows+'</tbody></table></div></div>';
 }
 
 // ══════ PLAYER MODAL ══════
