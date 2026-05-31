@@ -800,10 +800,10 @@ const FORMS={
   '4-2-2-1-1':[
     {id:'gk',lb:'GK',x:50,y:88},
     {id:'d1',lb:'DF',x:14,y:74},{id:'d2',lb:'DF',x:37,y:74},{id:'d3',lb:'DF',x:63,y:74},{id:'d4',lb:'DF',x:86,y:74},
-    {id:'m1',lb:'MF',x:35,y:62},{id:'m2',lb:'MF',x:65,y:62},
-    {id:'m3',lb:'MF',x:20,y:47},{id:'m4',lb:'MF',x:80,y:47},
-    {id:'f1',lb:'FW',x:50,y:30},
-    {id:'f2',lb:'FW',x:50,y:17},
+    {id:'m1',lb:'MF',x:35,y:64},{id:'m2',lb:'MF',x:65,y:64},
+    {id:'m3',lb:'MF',x:20,y:49},{id:'m4',lb:'MF',x:80,y:49},
+    {id:'f1',lb:'FW',x:50,y:32},
+    {id:'f2',lb:'FW',x:50,y:18},
   ],
   '4-1-3-1-1':[
     {id:'gk',lb:'GK',x:50,y:88},
@@ -1543,11 +1543,11 @@ function setSc(qi,tm,v){
 
 // ══════ MVP ══════
 function buildMvpSection(SEC,TH,T){
-  var years=[2025,2026,2027,2028,2029,2030];
+  var yr=S.statsYear;
   var leagues=['都リーグ','世田谷リーグ'];
   var isMgr=S.role==='manager';
   var rows='';
-  years.forEach(function(yr){
+  [yr].forEach(function(yr){
     leagues.forEach(function(lg){
       var key=yr+'_'+lg;
       var num=S.mvpData&&S.mvpData[key];
