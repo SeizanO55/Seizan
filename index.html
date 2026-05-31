@@ -1325,17 +1325,16 @@ function renderHalves(m){
         var inPl=gm(subOut.in);
         var inNick=inPl?inPl.nick:'?';
         var minTxt=subOut.minute?subOut.minute+'\'':'';
-        subBadge='<div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;'
-          +'background:rgba(255,80,96,.85);color:#fff;border-radius:5px;padding:1px 5px;'
-          +'font-size:9px;font-weight:700;white-space:nowrap;z-index:20;line-height:1.4;text-align:center;'
-          +'border:1px solid rgba(255,80,96,.5)">'
-          +(minTxt?'<span style="color:rgba(255,255,200,.9)">'+minTxt+'</span><br>':'')
-          +'▲'+inNick
+        subBadge='<div style="position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);'
+          +'background:rgba(180,30,30,.92);color:#fff;border-radius:4px;padding:1px 4px;'
+          +'font-size:8px;font-weight:700;white-space:nowrap;z-index:20;line-height:1.5;text-align:center;'
+          +'border:1px solid rgba(255,100,100,.5);pointer-events:none">'
+          +(minTxt?minTxt+' ':'')+'▲'+inNick
           +'</div>';
       }
       var onclk=isMgr?' onclick="openPM(this.dataset.q,this.dataset.pid)"':'';
       return '<div class="'+cls+'" data-q="'+q+'" data-pid="'+p.id+'"'
-        +' style="left:'+p.x+'%;top:'+p.y+'%;position:absolute;transform:translate(-50%,-50%);z-index:10;cursor:pointer;touch-action:none;user-select:none"'
+        +' style="left:'+p.x+'%;top:'+p.y+'%;position:absolute;transform:translate(-50%,-50%);z-index:10;cursor:pointer;touch-action:none;user-select:none;overflow:visible"'
         +onclk
         +' ondragover="event.preventDefault()" ondrop="dp(event,this.dataset.q,this.dataset.pid)">'
         +'<div class="pdot">'+inner+'</div>'
