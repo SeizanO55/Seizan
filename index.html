@@ -204,6 +204,19 @@ textarea{resize:vertical}
 .sub-t{font-size:10px;font-weight:700;color:var(--acc);margin-bottom:5px}
 .sub-row{display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap}
 .sub-lbl{font-size:9px;color:var(--dim);width:28px;flex-shrink:0;font-weight:700}
+/* Q内交代バッジ：円の内側下端に配置 */
+.sub-badge{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(140,15,15,.88);color:#fff;
+  border-radius:0 0 50% 50%;
+  padding:2px 3px 3px;font-size:8px;font-weight:700;
+  white-space:nowrap;z-index:20;line-height:1.2;
+  text-align:center;pointer-events:none;
+  overflow:hidden;text-overflow:ellipsis;
+}
+@media(max-width:600px){
+  .sub-badge{font-size:7px;padding:1px 2px 2px;}
+}
 .ch{font-size:9px;padding:2px 5px;border-radius:7px;font-weight:700}
 .ch.in{background:rgba(48,208,128,.13);color:var(--in);border:1px solid rgba(48,208,128,.26)}
 .ch.out{background:rgba(255,80,96,.13);color:var(--out);border:1px solid rgba(255,80,96,.26)}
@@ -1325,11 +1338,9 @@ function renderHalves(m){
         var inPl=gm(subOut.in);
         var inNick=inPl?inPl.nick:'?';
         var minTxt=subOut.minute?subOut.minute+'\'':'';
-        subBadge='<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);'
-          +'background:rgba(180,30,30,.92);color:#fff;border-radius:4px;padding:1px 5px;'
-          +'font-size:8px;font-weight:700;white-space:nowrap;z-index:20;line-height:1.5;text-align:center;'
-          +'border:1px solid rgba(255,100,100,.5);pointer-events:none">'
-          +(minTxt?minTxt+' ':'')+'▲'+inNick
+        // PCは円の下端に重ねる、スマホは円の外下に表示
+        subBadge='<div class="sub-badge">'
+          +'▲'+(inPl?inPl.num+' ':'')+inNick+(minTxt?' '+minTxt:'')
           +'</div>';
       }
       var onclk=isMgr?' onclick="openPM(this.dataset.q,this.dataset.pid)"':'';
